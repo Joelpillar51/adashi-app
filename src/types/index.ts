@@ -30,6 +30,11 @@ export interface Group {
   status: 'active' | 'paused' | 'completed';
   members: User[];
   createdAt: string;
+  accountDetails?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  };
 }
 
 export interface Message {

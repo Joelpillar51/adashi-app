@@ -67,6 +67,11 @@ export const mockGroups: Group[] = [
       },
     ],
     createdAt: '2024-06-01T00:00:00Z',
+    accountDetails: {
+      bankName: 'Guaranty Trust Bank (GTBank)',
+      accountNumber: '0123456789',
+      accountName: 'ADUNNI OKAFOR',
+    },
   },
   {
     id: 'group2',
@@ -84,6 +89,11 @@ export const mockGroups: Group[] = [
     status: 'active',
     members: [],
     createdAt: '2024-05-15T00:00:00Z',
+    accountDetails: {
+      bankName: 'First Bank of Nigeria',
+      accountNumber: '3085467291',
+      accountName: 'FOLAKE ADEYEMI',
+    },
   },
 ];
 

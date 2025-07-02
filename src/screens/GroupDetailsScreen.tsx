@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { useGroupStore } from '../state/groupStore';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
+import PaymentOverlay from '../components/PaymentOverlay';
 
 interface GroupDetailsScreenProps {
   route?: {
@@ -25,6 +26,7 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
   const insets = useSafeAreaInsets();
   const groupId = route?.params?.groupId || 'group1';
   const { groups, getGroupTimeline, getGroupMessages } = useGroupStore();
+  const [showPaymentOverlay, setShowPaymentOverlay] = useState(false);
 
   const group = groups.find(g => g.id === groupId);
   const timeline = getGroupTimeline(groupId);
@@ -79,7 +81,7 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
       subtitle: 'Transfer funds',
       icon: 'card' as const,
       color: 'bg-emerald-500',
-      onPress: () => navigation.navigate('MainTabs', { screen: 'Payments' }),
+      onPress: () => setShowPaymentOverlay(true),
     },
   ];
 
@@ -312,6 +314,17 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
           )}
         </View>
       </ScrollView>
+
+      {/* Payment Overlay */}
+      <PaymentOverlay
+        visible={showPaymentOverlay}
+        onClose={() => setShowPaymentOverlay(false)}
+        group={group}
+        onPaymentComplete={() => {
+          // Could update payment status or refresh data here
+          console.log('Payment completed for group:', group.name);
+        }}
+      />
     </View>
   );
 }

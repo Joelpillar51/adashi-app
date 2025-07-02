@@ -148,7 +148,15 @@ export default function OverviewScreen({ navigation }: any) {
       subtitle: 'Contribute to your groups',
       icon: 'card' as const,
       color: 'bg-emerald-500',
-      onPress: () => navigation.navigate('Payments'),
+      onPress: () => {
+        // Navigate to the first active group's payment
+        const firstActiveGroup = activeGroups[0];
+        if (firstActiveGroup) {
+          navigation.navigate('GroupDetails', { groupId: firstActiveGroup.id });
+        } else {
+          navigation.navigate('Payments');
+        }
+      },
     },
   ];
 

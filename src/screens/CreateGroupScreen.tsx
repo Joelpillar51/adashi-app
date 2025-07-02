@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroupStore } from '../state/groupStore';
 import { useUserStore } from '../state/userStore';
+import { NIGERIAN_BANKS } from '../types';
 import { formatNaira, parseNairaAmount } from '../utils/currency';
 import { cn } from '../utils/cn';
 
@@ -31,6 +32,10 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
     monthlyAmount: '',
     memberCount: '8',
     startDate: '',
+    // Account details
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,6 +68,23 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
       newErrors.memberCount = 'Minimum 3 members required';
     } else if (memberCount > 20) {
       newErrors.memberCount = 'Maximum 20 members allowed';
+    }
+
+    // Account details validation
+    if (!formData.bankName.trim()) {
+      newErrors.bankName = 'Please select a bank';
+    }
+
+    if (!formData.accountNumber.trim()) {
+      newErrors.accountNumber = 'Account number is required';
+    } else if (formData.accountNumber.length !== 10) {
+      newErrors.accountNumber = 'Account number must be 10 digits';
+    }
+
+    if (!formData.accountName.trim()) {
+      newErrors.accountName = 'Account name is required';
+    } else if (formData.accountName.trim().length < 3) {
+      newErrors.accountName = 'Account name must be at least 3 characters';
     }
     
     setErrors(newErrors);
@@ -110,6 +132,11 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
           isActive: true,
         }] : [],
         createdAt: new Date().toISOString(),
+        accountDetails: {
+          bankName: formData.bankName.trim(),
+          accountNumber: formData.accountNumber.trim(),
+          accountName: formData.accountName.trim().toUpperCase(),
+        },
       };
       
       addGroup(newGroup);
@@ -249,6 +276,84 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
           <Text className="text-gray-600 text-sm mt-2">
             Including yourself (3-20 members)
           </Text>
+        </View>
+
+        {/* Account Details Section */}
+        <View className="mb-6">
+          <Text className="text-lg font-semibold text-gray-900 mb-4">Collection Account Details</Text>
+          <Text className="text-sm text-gray-600 mb-4">
+            Members will transfer their contributions to this account
+          </Text>
+
+          {/* Bank Name */}
+          <View className="mb-4">
+            <Text className="text-base font-semibold text-gray-900 mb-3">Bank Name *</Text>
+            <View className="relative">
+              <Pressable
+                className={cn(
+                  'bg-white border rounded-xl px-4 py-4 flex-row items-center justify-between',
+                  errors.bankName ? 'border-red-300' : 'border-gray-200'
+                )}
+                onPress={() => {
+                  // For demo, we'll use the first bank
+                  setFormData(prev => ({ ...prev, bankName: NIGERIAN_BANKS[0] }));
+                }}
+              >
+                <Text className={cn(
+                  'text-base',
+                  formData.bankName ? 'text-gray-900' : 'text-gray-400'
+                )}>
+                  {formData.bankName || 'Select your bank'}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+              </Pressable>
+            </View>
+            {errors.bankName && (
+              <Text className="text-red-600 text-sm mt-2">{errors.bankName}</Text>
+            )}
+          </View>
+
+          {/* Account Number */}
+          <View className="mb-4">
+            <Text className="text-base font-semibold text-gray-900 mb-3">Account Number *</Text>
+            <TextInput
+              className={cn(
+                'bg-white border rounded-xl px-4 py-4 text-base text-gray-900 font-mono',
+                errors.accountNumber ? 'border-red-300' : 'border-gray-200'
+              )}
+              placeholder="1234567890"
+              value={formData.accountNumber}
+              onChangeText={(text) => setFormData(prev => ({ ...prev, accountNumber: text.replace(/\D/g, '').slice(0, 10) }))}
+              keyboardType="numeric"
+              maxLength={10}
+              placeholderTextColor="#9CA3AF"
+            />
+            {errors.accountNumber && (
+              <Text className="text-red-600 text-sm mt-2">{errors.accountNumber}</Text>
+            )}
+          </View>
+
+          {/* Account Name */}
+          <View className="mb-4">
+            <Text className="text-base font-semibold text-gray-900 mb-3">Account Name *</Text>
+            <TextInput
+              className={cn(
+                'bg-white border rounded-xl px-4 py-4 text-base text-gray-900',
+                errors.accountName ? 'border-red-300' : 'border-gray-200'
+              )}
+              placeholder="Account holder's full name"
+              value={formData.accountName}
+              onChangeText={(text) => setFormData(prev => ({ ...prev, accountName: text.toUpperCase() }))}
+              autoCapitalize="characters"
+              placeholderTextColor="#9CA3AF"
+            />
+            {errors.accountName && (
+              <Text className="text-red-600 text-sm mt-2">{errors.accountName}</Text>
+            )}
+            <Text className="text-gray-600 text-sm mt-2">
+              This should match your bank account name exactly
+            </Text>
+          </View>
         </View>
 
         {/* Summary Card */}
