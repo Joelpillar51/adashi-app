@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Group, User, Payment, TimelineItem, Message } from '../types';
+import { mockGroups, mockPayments, mockTimeline, mockMessages } from './mockData';
 
 interface GroupState {
   groups: Group[];
@@ -31,11 +32,11 @@ interface GroupState {
 export const useGroupStore = create<GroupState>()(
   persist(
     (set, get) => ({
-      groups: [],
+      groups: mockGroups,
       activeGroupId: null,
-      payments: [],
-      timeline: [],
-      messages: [],
+      payments: mockPayments,
+      timeline: mockTimeline,
+      messages: mockMessages,
 
       addGroup: (group) =>
         set((state) => ({
