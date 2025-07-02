@@ -65,7 +65,7 @@ const mockNotifications: Notification[] = [
     isRead: true,
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     actionType: 'navigate',
-    actionData: { screen: 'Payments' },
+    actionData: { screen: 'MainTabs', params: { screen: 'Payments' } },
     priority: 'medium',
     amount: 50000,
     memberName: 'Emeka Nwosu',
@@ -103,7 +103,7 @@ const mockNotifications: Notification[] = [
     isRead: true,
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
     actionType: 'navigate',
-    actionData: { screen: 'Groups' },
+    actionData: { screen: 'MainTabs', params: { screen: 'Groups' } },
     priority: 'low',
   },
   {

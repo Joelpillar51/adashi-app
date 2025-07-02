@@ -7,6 +7,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotificationStore } from '../state/notificationStore';
@@ -15,10 +16,11 @@ import { formatWATDateTime, getRelativeTime } from '../utils/date';
 import { cn } from '../utils/cn';
 
 interface NotificationScreenProps {
-  navigation?: any;
+  // We'll use the useNavigation hook instead of prop
 }
 
-export default function NotificationScreen({ navigation }: NotificationScreenProps) {
+export default function NotificationScreen() {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const {
     notifications,
@@ -91,12 +93,29 @@ export default function NotificationScreen({ navigation }: NotificationScreenPro
     }
 
     // Handle navigation if specified
-    if (notification.actionType === 'navigate' && notification.actionData && navigation) {
-      const { screen, params } = notification.actionData;
-      if (params) {
-        navigation.navigate(screen, params);
-      } else {
-        navigation.navigate(screen);
+    if (notification.actionType === 'navigate' && notification.actionData) {
+      try {
+        const { screen, params } = notification.actionData;
+        // Cast navigation to any to avoid TypeScript issues
+        const nav = navigation as any;
+        
+        // Check if navigation object exists and has navigate method
+        if (nav && typeof nav.navigate === 'function') {
+          if (params) {
+            nav.navigate(screen, params);
+          } else {
+            nav.navigate(screen);
+          }
+        } else {
+          throw new Error('Navigation method not available');
+        }
+      } catch (error) {
+        // Fallback if navigation fails - just show alert with notification content
+        Alert.alert(
+          notification.title,
+          notification.message + '\n\nNavigation is temporarily unavailable.',
+          [{ text: 'OK' }]
+        );
       }
     }
   };
@@ -168,7 +187,7 @@ export default function NotificationScreen({ navigation }: NotificationScreenPro
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
             <Pressable 
-              onPress={() => navigation?.goBack()}
+              onPress={() => navigation.goBack()}
               className="w-10 h-10 items-center justify-center rounded-full bg-gray-100 mr-3"
             >
               <Ionicons name="arrow-back" size={20} color="#374151" />
