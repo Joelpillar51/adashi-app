@@ -13,17 +13,17 @@ import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
 
 interface GroupDetailsScreenProps {
-  route: {
-    params: {
-      groupId: string;
+  route?: {
+    params?: {
+      groupId?: string;
     };
   };
-  navigation: any;
+  navigation?: any;
 }
 
 export default function GroupDetailsScreen({ route, navigation }: GroupDetailsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { groupId } = route.params;
+  const groupId = route?.params?.groupId || 'group1';
   const { groups, getGroupTimeline, getGroupMessages } = useGroupStore();
 
   const group = groups.find(g => g.id === groupId);

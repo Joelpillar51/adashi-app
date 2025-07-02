@@ -15,17 +15,17 @@ import { formatChatTime } from '../utils/date';
 import { cn } from '../utils/cn';
 
 interface GroupChatScreenProps {
-  route: {
-    params: {
-      groupId: string;
+  route?: {
+    params?: {
+      groupId?: string;
     };
   };
-  navigation: any;
+  navigation?: any;
 }
 
 export default function GroupChatScreen({ route, navigation }: GroupChatScreenProps) {
   const insets = useSafeAreaInsets();
-  const { groupId } = route.params;
+  const groupId = route?.params?.groupId || 'group1';
   const { groups, getGroupMessages, addMessage } = useGroupStore();
   const [newMessage, setNewMessage] = useState('');
 

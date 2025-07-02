@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,19 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroupStore } from '../state/groupStore';
+import { useUserStore, mockUserProfile } from '../state/userStore';
 import { useNotificationStore, createPaymentDueBanner } from '../state/notificationStore';
 import { mockGroups, mockPayments, mockTimeline, mockMessages } from '../state/mockData';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
 import NotificationBanner from '../components/NotificationBanner';
+import ProfileScreen from './ProfileScreen';
 
 export default function OverviewScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const [showProfile, setShowProfile] = useState(false);
+  
   const {
     groups,
     addGroup,
@@ -26,6 +30,13 @@ export default function OverviewScreen({ navigation }: any) {
     getTotalSaved,
     getUpcomingPayments,
   } = useGroupStore();
+  
+  const { 
+    profile,
+    setProfile,
+    getDisplayName,
+    getInitials 
+  } = useUserStore();
   
   const { 
     getVisibleBanners, 
@@ -44,12 +55,24 @@ export default function OverviewScreen({ navigation }: any) {
       // Add sample notification banners
       addBanner(createPaymentDueBanner('group1', 'Lagos Friends Circle', 50000, 14));
     }
+    
+    // Initialize user profile if not set
+    if (!profile) {
+      setProfile(mockUserProfile);
+    }
   }, []);
 
   const totalSaved = getTotalSaved();
   const upcomingPayments = getUpcomingPayments();
   const activeGroups = groups.filter((group) => group.status === 'active');
   const visibleBanners = getVisibleBanners();
+
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  };
 
   const nextPayment = groups.reduce((earliest, group) => {
     const groupDays = getDaysUntil(group.nextPaymentDue);
@@ -113,14 +136,25 @@ export default function OverviewScreen({ navigation }: any) {
       {/* Header */}
       <View className="bg-white px-6 pb-6 pt-4">
         <View className="flex-row items-center justify-between mb-2">
-          <View>
-            <Text className="text-3xl font-bold text-gray-900">ContribTracker</Text>
-            <Text className="text-base text-gray-600 mt-1">Your ROSCA savings partner</Text>
+          <View className="flex-1">
+            <Text className="text-lg text-gray-600 mb-1">Good {getTimeOfDay()}</Text>
+            <Text className="text-2xl font-bold text-gray-900">{getDisplayName()}</Text>
           </View>
-          <Pressable className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
-            <Ionicons name="notifications-outline" size={24} color="#6B7280" />
-          </Pressable>
+          <View className="flex-row items-center gap-3">
+            <Pressable className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+              <Ionicons name="notifications-outline" size={24} color="#6B7280" />
+            </Pressable>
+            <Pressable 
+              onPress={() => setShowProfile(true)}
+              className="w-12 h-12 bg-blue-500 rounded-full items-center justify-center"
+            >
+              <Text className="text-base font-bold text-white">
+                {getInitials()}
+              </Text>
+            </Pressable>
+          </View>
         </View>
+        <Text className="text-sm text-gray-500 mt-1">Track your savings circles</Text>
       </View>
 
       {/* Stats Cards */}
@@ -238,6 +272,12 @@ export default function OverviewScreen({ navigation }: any) {
           ))}
         </View>
       </View>
+
+      {/* Profile Modal */}
+      <ProfileScreen 
+        visible={showProfile} 
+        onClose={() => setShowProfile(false)} 
+      />
     </ScrollView>
   );
 }

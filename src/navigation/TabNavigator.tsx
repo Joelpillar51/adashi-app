@@ -40,7 +40,7 @@ export default function TabNavigator() {
           } else if (route.name === 'Members') {
             iconName = focused ? 'person-add' : 'person-add-outline';
           } else {
-            iconName = 'circle';
+            iconName = 'ellipse-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
