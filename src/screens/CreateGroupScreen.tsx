@@ -8,13 +8,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGroupStore } from '../state/groupStore';
 import { useUserStore } from '../state/userStore';
-import { NIGERIAN_BANKS } from '../types';
 import { formatNaira, parseNairaAmount } from '../utils/currency';
+import { formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
 
 interface CreateGroupScreenProps {
@@ -31,13 +33,10 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
     description: '',
     monthlyAmount: '',
     memberCount: '8',
-    startDate: '',
-    // Account details
-    bankName: '',
-    accountNumber: '',
-    accountName: '',
   });
   
+  const [startDate, setStartDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // Default to 1 week from now
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,22 +68,12 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
     } else if (memberCount > 20) {
       newErrors.memberCount = 'Maximum 20 members allowed';
     }
-
-    // Account details validation
-    if (!formData.bankName.trim()) {
-      newErrors.bankName = 'Please select a bank';
-    }
-
-    if (!formData.accountNumber.trim()) {
-      newErrors.accountNumber = 'Account number is required';
-    } else if (formData.accountNumber.length !== 10) {
-      newErrors.accountNumber = 'Account number must be 10 digits';
-    }
-
-    if (!formData.accountName.trim()) {
-      newErrors.accountName = 'Account name is required';
-    } else if (formData.accountName.trim().length < 3) {
-      newErrors.accountName = 'Account name must be at least 3 characters';
+    
+    // Start date validation
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (startDate < today) {
+      newErrors.startDate = 'Start date cannot be in the past';
     }
     
     setErrors(newErrors);
@@ -113,8 +102,9 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
         monthlyAmount: parseNairaAmount(formData.monthlyAmount),
         currentRecipient: 'TBD',
         myPosition: 1, // Creator gets position 1
-        nextPaymentDue: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        daysLeft: 30,
+        nextPaymentDue: startDate.toISOString(),
+        daysLeft: Math.ceil((startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        startDate: startDate.toISOString(),
         totalSaved: 0,
         cycleProgress: 0,
         role: 'owner' as const,
@@ -132,11 +122,6 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
           isActive: true,
         }] : [],
         createdAt: new Date().toISOString(),
-        accountDetails: {
-          bankName: formData.bankName.trim(),
-          accountNumber: formData.accountNumber.trim(),
-          accountName: formData.accountName.trim().toUpperCase(),
-        },
       };
       
       addGroup(newGroup);
@@ -278,82 +263,30 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
           </Text>
         </View>
 
-        {/* Account Details Section */}
+        {/* Start Date */}
         <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-900 mb-4">Collection Account Details</Text>
-          <Text className="text-sm text-gray-600 mb-4">
-            Members will transfer their contributions to this account
-          </Text>
-
-          {/* Bank Name */}
-          <View className="mb-4">
-            <Text className="text-base font-semibold text-gray-900 mb-3">Bank Name *</Text>
-            <View className="relative">
-              <Pressable
-                className={cn(
-                  'bg-white border rounded-xl px-4 py-4 flex-row items-center justify-between',
-                  errors.bankName ? 'border-red-300' : 'border-gray-200'
-                )}
-                onPress={() => {
-                  // For demo, we'll use the first bank
-                  setFormData(prev => ({ ...prev, bankName: NIGERIAN_BANKS[0] }));
-                }}
-              >
-                <Text className={cn(
-                  'text-base',
-                  formData.bankName ? 'text-gray-900' : 'text-gray-400'
-                )}>
-                  {formData.bankName || 'Select your bank'}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
-              </Pressable>
+          <Text className="text-base font-semibold text-gray-900 mb-3">Contribution Start Date *</Text>
+          <Pressable
+            onPress={() => setShowDatePicker(true)}
+            className={cn(
+              'bg-white border rounded-xl px-4 py-4 flex-row items-center justify-between',
+              errors.startDate ? 'border-red-300' : 'border-gray-200'
+            )}
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="calendar" size={20} color="#6B7280" />
+              <Text className="text-base text-gray-900 ml-3">
+                {formatWATDate(startDate)}
+              </Text>
             </View>
-            {errors.bankName && (
-              <Text className="text-red-600 text-sm mt-2">{errors.bankName}</Text>
-            )}
-          </View>
-
-          {/* Account Number */}
-          <View className="mb-4">
-            <Text className="text-base font-semibold text-gray-900 mb-3">Account Number *</Text>
-            <TextInput
-              className={cn(
-                'bg-white border rounded-xl px-4 py-4 text-base text-gray-900 font-mono',
-                errors.accountNumber ? 'border-red-300' : 'border-gray-200'
-              )}
-              placeholder="1234567890"
-              value={formData.accountNumber}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, accountNumber: text.replace(/\D/g, '').slice(0, 10) }))}
-              keyboardType="numeric"
-              maxLength={10}
-              placeholderTextColor="#9CA3AF"
-            />
-            {errors.accountNumber && (
-              <Text className="text-red-600 text-sm mt-2">{errors.accountNumber}</Text>
-            )}
-          </View>
-
-          {/* Account Name */}
-          <View className="mb-4">
-            <Text className="text-base font-semibold text-gray-900 mb-3">Account Name *</Text>
-            <TextInput
-              className={cn(
-                'bg-white border rounded-xl px-4 py-4 text-base text-gray-900',
-                errors.accountName ? 'border-red-300' : 'border-gray-200'
-              )}
-              placeholder="Account holder's full name"
-              value={formData.accountName}
-              onChangeText={(text) => setFormData(prev => ({ ...prev, accountName: text.toUpperCase() }))}
-              autoCapitalize="characters"
-              placeholderTextColor="#9CA3AF"
-            />
-            {errors.accountName && (
-              <Text className="text-red-600 text-sm mt-2">{errors.accountName}</Text>
-            )}
-            <Text className="text-gray-600 text-sm mt-2">
-              This should match your bank account name exactly
-            </Text>
-          </View>
+            <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+          </Pressable>
+          {errors.startDate && (
+            <Text className="text-red-600 text-sm mt-2">{errors.startDate}</Text>
+          )}
+          <Text className="text-gray-600 text-sm mt-2">
+            When members should start making monthly contributions
+          </Text>
         </View>
 
         {/* Summary Card */}
@@ -376,6 +309,10 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
               <View className="flex-row justify-between">
                 <Text className="text-gray-600">Your Position</Text>
                 <Text className="font-semibold text-gray-900">#1 (First to collect)</Text>
+              </View>
+              <View className="flex-row justify-between">
+                <Text className="text-gray-600">Start Date</Text>
+                <Text className="font-semibold text-gray-900">{formatWATDate(startDate)}</Text>
               </View>
             </View>
           </View>
@@ -402,6 +339,54 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
           After creating the group, you can invite members by sharing the group code or sending invitations.
         </Text>
       </ScrollView>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={startDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          minimumDate={new Date()}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(Platform.OS === 'ios' ? showDatePicker : false);
+            if (selectedDate) {
+              setStartDate(selectedDate);
+              setErrors(prev => ({ ...prev, startDate: '' })); // Clear error when date is selected
+            }
+          }}
+        />
+      )}
+
+      {/* iOS Date Picker Modal */}
+      {Platform.OS === 'ios' && showDatePicker && (
+        <Modal transparent animationType="slide">
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="bg-white rounded-t-3xl" style={{ paddingBottom: insets.bottom }}>
+              <View className="flex-row items-center justify-between p-4 border-b border-gray-200">
+                <Pressable onPress={() => setShowDatePicker(false)}>
+                  <Text className="text-blue-600 font-semibold">Cancel</Text>
+                </Pressable>
+                <Text className="text-lg font-semibold text-gray-900">Select Start Date</Text>
+                <Pressable onPress={() => setShowDatePicker(false)}>
+                  <Text className="text-blue-600 font-semibold">Done</Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display="spinner"
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) {
+                    setStartDate(selectedDate);
+                    setErrors(prev => ({ ...prev, startDate: '' }));
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
     </KeyboardAvoidingView>
   );
 }
