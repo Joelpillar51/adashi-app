@@ -68,6 +68,13 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
       onPress: () => navigation.navigate('PositionAssignment', { groupId }),
     }] : []),
     {
+      title: 'Invite Members',
+      subtitle: 'Share invite code or link',
+      icon: 'person-add' as const,
+      color: 'bg-purple-500',
+      onPress: () => navigation.navigate('InviteMembers', { groupId }),
+    },
+    {
       title: 'Make Payment',
       subtitle: 'Transfer funds',
       icon: 'card' as const,
@@ -223,6 +230,13 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
                   +{group.members.length - 3} more members
                 </Text>
               )}
+              <Pressable 
+                onPress={() => navigation.navigate('InviteMembers', { groupId })}
+                className="mt-4 pt-4 border-t border-gray-100 flex-row items-center justify-center"
+              >
+                <Ionicons name="person-add" size={16} color="#3B82F6" />
+                <Text className="text-blue-600 font-medium ml-2">Invite More Members</Text>
+              </Pressable>
             </View>
           ) : (
             <View className="items-center py-4">

@@ -12,12 +12,14 @@ import { useGroupStore } from '../state/groupStore';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
+import GroupActionOverlay from '../components/GroupActionOverlay';
 import CreateGroupModal from '../components/CreateGroupModal';
 
 export default function GroupsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { groups, setActiveGroup } = useGroupStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showActionOverlay, setShowActionOverlay] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const filteredGroups = groups.filter((group) =>
@@ -61,7 +63,7 @@ export default function GroupsScreen({ navigation }: any) {
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-2xl font-bold text-gray-900">My Groups</Text>
           <Pressable 
-            onPress={() => navigation.navigate('CreateGroup')}
+            onPress={() => setShowActionOverlay(true)}
             className="w-10 h-10 bg-blue-500 rounded-full items-center justify-center"
           >
             <Ionicons name="add" size={24} color="white" />
@@ -97,10 +99,10 @@ export default function GroupsScreen({ navigation }: any) {
             </Text>
             {!searchQuery && (
               <Pressable 
-                onPress={() => navigation.navigate('CreateGroup')}
+                onPress={() => setShowActionOverlay(true)}
                 className="bg-blue-500 px-6 py-3 rounded-xl"
               >
-                <Text className="text-white font-semibold">Create Group</Text>
+                <Text className="text-white font-semibold">Create or Join Group</Text>
               </Pressable>
             )}
           </View>
@@ -189,10 +191,12 @@ export default function GroupsScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      {/* Create Group Modal */}
-      <CreateGroupModal 
-        visible={showCreateModal} 
-        onClose={() => setShowCreateModal(false)} 
+      {/* Group Action Overlay */}
+      <GroupActionOverlay
+        visible={showActionOverlay}
+        onClose={() => setShowActionOverlay(false)}
+        onCreateGroup={() => navigation.navigate('CreateGroup')}
+        onJoinGroup={() => navigation.navigate('JoinGroup')}
       />
     </View>
   );
