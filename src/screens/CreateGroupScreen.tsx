@@ -477,8 +477,9 @@ export default function CreateGroupScreen({ navigation }: CreateGroupScreenProps
                 <DateTimePicker
                   value={startDate}
                   mode="date"
-                  display="spinner"
+                  display="wheels"
                   minimumDate={new Date()}
+                  style={{ height: 200 }}
                   onChange={(event, selectedDate) => {
                     if (selectedDate) {
                       setStartDate(selectedDate);
