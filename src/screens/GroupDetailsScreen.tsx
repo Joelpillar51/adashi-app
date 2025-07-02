@@ -79,7 +79,7 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
       subtitle: 'Transfer funds',
       icon: 'card' as const,
       color: 'bg-emerald-500',
-      onPress: () => navigation.navigate('Payments'),
+      onPress: () => navigation.navigate('MainTabs', { screen: 'Payments' }),
     },
   ];
 
