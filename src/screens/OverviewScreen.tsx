@@ -167,16 +167,46 @@ export default function OverviewScreen({ navigation }: any) {
       icon: 'card' as const,
       color: 'bg-emerald-500',
       onPress: () => {
-        // Navigate to the first active group's payment details
-        const firstActiveGroup = activeGroups[0];
-        if (firstActiveGroup) {
-          navigation.navigate('GroupDetails', { groupId: firstActiveGroup.id });
-        } else {
-          // Just show an alert if no active groups
+        if (activeGroups.length === 1) {
+          // Only one active group, go directly to it
+          navigation.navigate('GroupDetails', { groupId: activeGroups[0].id });
+        } else if (activeGroups.length > 1) {
+          // Multiple active groups, let user choose
+          Alert.alert(
+            'Select Group',
+            'Choose which group you want to make a payment to:',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              ...activeGroups.slice(0, 3).map(group => ({
+                text: group.name,
+                onPress: () => navigation.navigate('GroupDetails', { groupId: group.id })
+              })),
+              ...(activeGroups.length > 3 ? [{
+                text: 'View All Groups',
+                onPress: () => navigation.navigate('Groups')
+              }] : [])
+            ]
+          );
+        } else if (groups.length > 0) {
+          // Groups exist but none are active
           Alert.alert(
             'No Active Groups',
-            'Create or join a group first to make payments.',
-            [{ text: 'OK' }]
+            'You have groups but none are currently active. Would you like to view your groups?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'View Groups', onPress: () => navigation.navigate('Groups') }
+            ]
+          );
+        } else {
+          // No groups at all
+          Alert.alert(
+            'No Groups Found',
+            'You need to create or join a group before you can make payments.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Create Group', onPress: () => navigation.navigate('CreateGroup') },
+              { text: 'Join Group', onPress: () => navigation.navigate('Groups') }
+            ]
           );
         }
       },
