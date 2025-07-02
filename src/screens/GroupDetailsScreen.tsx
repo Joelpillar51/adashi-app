@@ -42,6 +42,9 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
   const nextTimelineItem = timeline.find(item => item.status === 'upcoming');
   const completedItems = timeline.filter(item => item.status === 'completed').length;
 
+  const isOwnerOrAdmin = group.role === 'owner' || group.role === 'admin';
+  const hasAssignedPositions = group.members.some(member => member.rotationPosition > 0);
+
   const quickActions = [
     {
       title: 'Group Chat',
@@ -57,6 +60,13 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
       color: 'bg-purple-500',
       onPress: () => navigation.navigate('RotationTimeline', { groupId }),
     },
+    ...(isOwnerOrAdmin ? [{
+      title: hasAssignedPositions ? 'Manage Positions' : 'Assign Positions',
+      subtitle: hasAssignedPositions ? 'View or reassign' : 'Set collection order',
+      icon: 'shuffle' as const,
+      color: 'bg-indigo-500',
+      onPress: () => navigation.navigate('PositionAssignment', { groupId }),
+    }] : []),
     {
       title: 'Make Payment',
       subtitle: 'Transfer funds',
@@ -172,6 +182,62 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
           <Text className="text-sm text-gray-600">
             {completedItems} of {timeline.length} collections completed
           </Text>
+        </View>
+
+        {/* Position Status */}
+        <View className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-lg font-semibold text-gray-900">Position Status</Text>
+            {isOwnerOrAdmin && (
+              <Pressable 
+                onPress={() => navigation.navigate('PositionAssignment', { groupId })}
+                className="bg-blue-50 px-3 py-1 rounded-lg"
+              >
+                <Text className="text-blue-600 text-sm font-medium">
+                  {hasAssignedPositions ? 'Manage' : 'Assign'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+          
+          {hasAssignedPositions ? (
+            <View className="gap-3">
+              {group.members
+                .sort((a, b) => a.rotationPosition - b.rotationPosition)
+                .slice(0, 3)
+                .map((member) => (
+                  <View key={member.id} className="flex-row items-center">
+                    <View className="w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3">
+                      <Text className="text-white font-bold text-sm">#{member.rotationPosition}</Text>
+                    </View>
+                    <Text className="text-base text-gray-900 flex-1">{member.name}</Text>
+                    <Text className="text-sm text-gray-600">
+                      {member.rotationPosition === 1 ? 'First' : 
+                       member.rotationPosition === 2 ? 'Second' : 
+                       member.rotationPosition === 3 ? 'Third' : `${member.rotationPosition}th`}
+                    </Text>
+                  </View>
+                ))}
+              {group.members.length > 3 && (
+                <Text className="text-sm text-gray-500 text-center mt-2">
+                  +{group.members.length - 3} more members
+                </Text>
+              )}
+            </View>
+          ) : (
+            <View className="items-center py-4">
+              <View className="w-12 h-12 bg-gray-100 rounded-full items-center justify-center mb-3">
+                <Ionicons name="shuffle-outline" size={24} color="#6B7280" />
+              </View>
+              <Text className="text-base font-medium text-gray-900 mb-1">Positions Not Assigned</Text>
+              <Text className="text-sm text-gray-600 text-center">
+                {isOwnerOrAdmin 
+                  ? 'Assign collection positions to start the rotation cycle'
+                  : 'Waiting for admin to assign collection positions'
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Payment Alert */}
