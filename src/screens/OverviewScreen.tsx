@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -165,12 +166,17 @@ export default function OverviewScreen({ navigation }: any) {
       icon: 'card' as const,
       color: 'bg-emerald-500',
       onPress: () => {
-        // Navigate to the first active group's payment
+        // Navigate to the first active group's payment details
         const firstActiveGroup = activeGroups[0];
         if (firstActiveGroup) {
           navigation.navigate('GroupDetails', { groupId: firstActiveGroup.id });
         } else {
-          navigation.navigate('Payments');
+          // Just show an alert if no active groups
+          Alert.alert(
+            'No Active Groups',
+            'Create or join a group first to make payments.',
+            [{ text: 'OK' }]
+          );
         }
       },
     },
