@@ -8,10 +8,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroupStore } from '../state/groupStore';
+import { useUserStore } from '../state/userStore';
+import { useInviteRequestStore } from '../state/inviteRequestStore';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
-import PaymentOverlay from '../components/PaymentOverlay';
 
 interface GroupDetailsScreenProps {
   route?: {
@@ -26,6 +27,8 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
   const insets = useSafeAreaInsets();
   const groupId = route?.params?.groupId || 'group1';
   const { groups, getGroupTimeline, getGroupMessages } = useGroupStore();
+  const { profile } = useUserStore();
+  const { hasApprovedRequest, getRequestsForGroup } = useInviteRequestStore();
   const [showPaymentOverlay, setShowPaymentOverlay] = useState(false);
 
   const group = groups.find(g => g.id === groupId);
@@ -46,6 +49,8 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
 
   const isOwnerOrAdmin = group.role === 'owner' || group.role === 'admin';
   const hasAssignedPositions = group.members.some(member => member.rotationPosition > 0);
+  const hasInviteAccess = isOwnerOrAdmin || hasApprovedRequest(groupId, profile?.id || '');
+  const pendingRequests = getRequestsForGroup(groupId).filter(r => r.status === 'pending');
 
   const quickActions = [
     {
@@ -70,11 +75,17 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
       onPress: () => navigation.navigate('PositionAssignment', { groupId }),
     }] : []),
     {
-      title: 'Invite Members',
-      subtitle: 'Share invite code or link',
-      icon: 'person-add' as const,
+      title: hasInviteAccess ? 'Invite Members' : 'Request Invite Access',
+      subtitle: hasInviteAccess ? 'Share invite code or link' : 'Ask admin for permission',
+      icon: (hasInviteAccess ? 'person-add' : 'mail-outline') as any,
       color: 'bg-purple-500',
-      onPress: () => navigation.navigate('InviteMembers', { groupId }),
+      onPress: () => {
+        if (hasInviteAccess) {
+          navigation.navigate('InviteMembers', { groupId });
+        } else {
+          navigation.navigate('RequestInvite', { groupId });
+        }
+      },
     },
     {
       title: 'Make Payment',
@@ -271,6 +282,29 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
           </View>
         )}
 
+        {/* Invite Requests Alert (Admin only) */}
+        {isOwnerOrAdmin && pendingRequests.length > 0 && (
+          <View className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <Ionicons name="mail" size={20} color="#3B82F6" />
+                <View className="ml-3 flex-1">
+                  <Text className="font-semibold text-blue-800">Invite Requests</Text>
+                  <Text className="text-sm text-blue-700 mt-1">
+                    {pendingRequests.length} member{pendingRequests.length !== 1 ? 's' : ''} requesting invite access
+                  </Text>
+                </View>
+              </View>
+              <Pressable
+                onPress={() => navigation.navigate('InviteRequests', { groupId })}
+                className="bg-blue-500 px-4 py-2 rounded-lg"
+              >
+                <Text className="text-white font-medium text-sm">Review</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* Quick Actions */}
         <View className="mb-6">
           <Text className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</Text>
@@ -315,16 +349,7 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
         </View>
       </ScrollView>
 
-      {/* Payment Overlay */}
-      <PaymentOverlay
-        visible={showPaymentOverlay}
-        onClose={() => setShowPaymentOverlay(false)}
-        group={group}
-        onPaymentComplete={() => {
-          // Could update payment status or refresh data here
-          console.log('Payment completed for group:', group.name);
-        }}
-      />
+
     </View>
   );
 }

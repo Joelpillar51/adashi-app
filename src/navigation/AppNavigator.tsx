@@ -7,6 +7,8 @@ import RotationTimelineScreen from '../screens/RotationTimelineScreen';
 import CreateGroupScreen from '../screens/CreateGroupScreen';
 import JoinGroupScreen from '../screens/JoinGroupScreen';
 import InviteMembersScreen from '../screens/InviteMembersScreen';
+import RequestInviteScreen from '../screens/RequestInviteScreen';
+import InviteRequestsScreen from '../screens/InviteRequestsScreen';
 import PositionAssignmentScreen from '../screens/PositionAssignmentScreen';
 import ManualPositionAssignmentScreen from '../screens/ManualPositionAssignmentScreen';
 
@@ -26,6 +28,8 @@ export default function AppNavigator() {
       <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
       <Stack.Screen name="JoinGroup" component={JoinGroupScreen} />
       <Stack.Screen name="InviteMembers" component={InviteMembersScreen} />
+      <Stack.Screen name="RequestInvite" component={RequestInviteScreen} />
+      <Stack.Screen name="InviteRequests" component={InviteRequestsScreen} />
       <Stack.Screen name="PositionAssignment" component={PositionAssignmentScreen} />
       <Stack.Screen name="ManualPositionAssignment" component={ManualPositionAssignmentScreen} />
     </Stack.Navigator>
