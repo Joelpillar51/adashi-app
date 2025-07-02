@@ -27,6 +27,11 @@ export default function PaymentsScreen() {
     return payment.type === filterType;
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Get counts for each type
+  const contributionCount = payments.filter(p => p.type === 'contribution').length;
+  const collectionCount = payments.filter(p => p.type === 'collection').length;
+  const allCount = payments.length;
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -135,9 +140,9 @@ export default function PaymentsScreen() {
         {/* Filter Tabs */}
         <View className="flex-row bg-gray-50 rounded-xl p-1">
           {[
-            { key: 'all', label: 'All' },
-            { key: 'contribution', label: 'Contributions' },
-            { key: 'collection', label: 'Collections' },
+            { key: 'all', label: 'All', count: allCount },
+            { key: 'contribution', label: 'Contributions', count: contributionCount },
+            { key: 'collection', label: 'Collections', count: collectionCount },
           ].map((tab) => (
             <Pressable
               key={tab.key}
@@ -153,7 +158,7 @@ export default function PaymentsScreen() {
                   filterType === tab.key ? 'text-gray-900' : 'text-gray-600'
                 )}
               >
-                {tab.label}
+                {tab.label} ({(tab as any).count})
               </Text>
             </Pressable>
           ))}
@@ -179,11 +184,24 @@ export default function PaymentsScreen() {
         {filteredPayments.length === 0 ? (
           <View className="items-center justify-center py-16">
             <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-              <Ionicons name="card-outline" size={32} color="#9CA3AF" />
+              <Ionicons 
+                name={filterType === 'contribution' ? 'arrow-up-circle-outline' : 
+                      filterType === 'collection' ? 'arrow-down-circle-outline' : 'card-outline'} 
+                size={32} 
+                color="#9CA3AF" 
+              />
             </View>
-            <Text className="text-lg font-semibold text-gray-900 mb-2">No Payments Found</Text>
+            <Text className="text-lg font-semibold text-gray-900 mb-2">
+              {filterType === 'contribution' ? 'No Contributions' : 
+               filterType === 'collection' ? 'No Collections' : 'No Payments Found'}
+            </Text>
             <Text className="text-base text-gray-600 text-center">
-              Your payment history will appear here once you start making contributions
+              {filterType === 'contribution' 
+                ? 'Your monthly contributions to groups will appear here'
+                : filterType === 'collection'
+                ? 'Your collection receipts from groups will appear here'
+                : 'Your payment history will appear here once you start making contributions'
+              }
             </Text>
           </View>
         ) : (

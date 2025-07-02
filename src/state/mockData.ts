@@ -88,6 +88,7 @@ export const mockGroups: Group[] = [
 ];
 
 export const mockPayments: Payment[] = [
+  // Contributions
   {
     id: 'payment1',
     groupName: 'Lagos Friends Circle',
@@ -110,6 +111,40 @@ export const mockPayments: Payment[] = [
     method: 'bank_transfer',
   },
   {
+    id: 'payment4',
+    groupName: 'Lagos Friends Circle',
+    groupId: 'group1',
+    amount: 50000,
+    type: 'contribution',
+    status: 'completed',
+    date: '2024-11-15T00:00:00Z',
+    method: 'bank_transfer',
+    reference: 'TXN987654321',
+  },
+  {
+    id: 'payment5',
+    groupName: 'Office Colleagues',
+    groupId: 'group2',
+    amount: 75000,
+    type: 'contribution',
+    status: 'completed',
+    date: '2024-12-20T00:00:00Z',
+    method: 'bank_transfer',
+    reference: 'TXN555666777',
+  },
+  {
+    id: 'payment6',
+    groupName: 'Lagos Friends Circle',
+    groupId: 'group1',
+    amount: 50000,
+    type: 'contribution',
+    status: 'failed',
+    date: '2024-10-15T00:00:00Z',
+    method: 'bank_transfer',
+  },
+  
+  // Collections
+  {
     id: 'payment3',
     groupName: 'Lagos Friends Circle',
     groupId: 'group1',
@@ -120,6 +155,54 @@ export const mockPayments: Payment[] = [
     method: 'bank_transfer',
     recipient: 'Emeka Nwosu',
     reference: 'COL987654321',
+  },
+  {
+    id: 'payment7',
+    groupName: 'Lagos Friends Circle',
+    groupId: 'group1',
+    amount: 400000,
+    type: 'collection',
+    status: 'completed',
+    date: '2024-08-30T00:00:00Z',
+    method: 'bank_transfer',
+    recipient: 'Me (Adunni Okafor)',
+    reference: 'COL111222333',
+  },
+  {
+    id: 'payment8',
+    groupName: 'Office Colleagues',
+    groupId: 'group2',
+    amount: 900000,
+    type: 'collection',
+    status: 'pending',
+    date: '2025-02-28T00:00:00Z',
+    method: 'bank_transfer',
+    recipient: 'Me (Adunni Okafor)',
+  },
+  {
+    id: 'payment9',
+    groupName: 'Office Colleagues',
+    groupId: 'group2',
+    amount: 900000,
+    type: 'collection',
+    status: 'completed',
+    date: '2024-10-30T00:00:00Z',
+    method: 'bank_transfer',
+    recipient: 'Folake Adeyemi',
+    reference: 'COL444555666',
+  },
+  
+  // Penalties
+  {
+    id: 'payment10',
+    groupName: 'Lagos Friends Circle',
+    groupId: 'group1',
+    amount: 5000,
+    type: 'penalty',
+    status: 'completed',
+    date: '2024-09-15T00:00:00Z',
+    method: 'bank_transfer',
+    reference: 'PEN777888999',
   },
 ];
 
