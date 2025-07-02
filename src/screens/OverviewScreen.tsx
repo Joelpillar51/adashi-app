@@ -378,7 +378,7 @@ export default function OverviewScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center justify-between mb-3">
                   <Text className={cn(
                     'text-sm',
                     isPaymentDue ? 'text-amber-600 font-medium' : 'text-gray-600'
@@ -389,6 +389,52 @@ export default function OverviewScreen({ navigation }: any) {
                     Progress: {Math.round(group.cycleProgress)}%
                   </Text>
                 </View>
+                
+                {/* Action Buttons */}
+                <View className="flex-row gap-2">
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation(); // Prevent triggering the parent Pressable
+                      // Navigate to payment flow for this specific group
+                      Alert.alert(
+                        'Make Payment',
+                        `Contribute ${formatNaira(group.monthlyAmount)} to ${group.name}?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'View Bank Details', onPress: () => {
+                            Alert.alert(
+                              'Bank Transfer Details',
+                              `Bank: ${group.accountDetails?.bankName || 'Not available'}\nAccount: ${group.accountDetails?.accountNumber || 'Not available'}\nName: ${group.accountDetails?.accountName || 'Not available'}\n\nAmount: ${formatNaira(group.monthlyAmount)}`,
+                              [{ text: 'OK' }]
+                            );
+                          }},
+                          { text: 'Go to Group', onPress: () => navigation.navigate('GroupDetails', { groupId: group.id }) }
+                        ]
+                      );
+                    }}
+                    className={cn(
+                      'flex-1 py-2 px-3 rounded-lg flex-row items-center justify-center',
+                      isPaymentDue ? 'bg-amber-500' : 'bg-emerald-500'
+                    )}
+                  >
+                    <Ionicons name="card" size={16} color="white" />
+                    <Text className="text-white font-medium text-sm ml-2">
+                      {isPaymentDue ? 'Pay Now' : 'Make Payment'}
+                    </Text>
+                  </Pressable>
+                  
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation(); // Prevent triggering the parent Pressable
+                      navigation.navigate('GroupDetails', { groupId: group.id });
+                    }}
+                    className="px-3 py-2 rounded-lg bg-gray-100 flex-row items-center justify-center"
+                  >
+                    <Ionicons name="eye" size={16} color="#6B7280" />
+                    <Text className="text-gray-700 font-medium text-sm ml-1">View</Text>
+                  </Pressable>
+                </View>
+                
                 {isPaymentDue && (
                   <View className="mt-2 p-2 bg-amber-50 rounded-lg">
                     <Text className="text-xs text-amber-700">💰 Payment due soon!</Text>

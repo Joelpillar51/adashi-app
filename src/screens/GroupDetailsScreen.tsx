@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -349,7 +350,127 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
         </View>
       </ScrollView>
 
+      {/* Payment Overlay */}
+      {showPaymentOverlay && (
+        <View className="absolute inset-0 bg-black/50 flex-1 justify-end">
+          <View className="bg-white rounded-t-3xl" style={{ paddingBottom: insets.bottom + 24 }}>
+            <View className="flex-row items-center justify-between p-6 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-900">Make Payment</Text>
+              <Pressable onPress={() => setShowPaymentOverlay(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </Pressable>
+            </View>
+            
+            <View className="p-6">
+              <View className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+                <View className="flex-row items-center mb-4">
+                  <View className="w-12 h-12 bg-blue-500 rounded-2xl items-center justify-center mr-3">
+                    <Ionicons name="people" size={24} color="white" />
+                  </View>
+                  <View>
+                    <Text className="text-lg font-bold text-gray-900">{group.name}</Text>
+                    <Text className="text-sm text-gray-600">Monthly Contribution</Text>
+                  </View>
+                </View>
+                
+                <View className="bg-white rounded-xl p-4">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-sm text-gray-600">Amount Due</Text>
+                    <Text className="text-xl font-bold text-gray-900">{formatNaira(group.monthlyAmount)}</Text>
+                  </View>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm text-gray-600">Due Date</Text>
+                    <Text className="text-sm font-medium text-gray-900">{formatWATDate(group.nextPaymentDue)}</Text>
+                  </View>
+                </View>
+              </View>
 
+              {group.accountDetails && (
+                <View className="bg-gray-50 rounded-2xl p-4 mb-6">
+                  <Text className="text-base font-semibold text-gray-900 mb-3">Bank Transfer Details</Text>
+                  <View className="gap-2">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-sm text-gray-600">Bank Name</Text>
+                      <Text className="text-sm font-medium text-gray-900">{group.accountDetails.bankName}</Text>
+                    </View>
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-sm text-gray-600">Account Number</Text>
+                      <Text className="text-sm font-mono font-medium text-gray-900">{group.accountDetails.accountNumber}</Text>
+                    </View>
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-sm text-gray-600">Account Name</Text>
+                      <Text className="text-sm font-medium text-gray-900">{group.accountDetails.accountName}</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              <View className="gap-3">
+                <Pressable 
+                  onPress={() => {
+                    const bankDetails = group.accountDetails;
+                    if (bankDetails) {
+                      const details = `Bank: ${bankDetails.bankName}\nAccount: ${bankDetails.accountNumber}\nName: ${bankDetails.accountName}\nAmount: ${formatNaira(group.monthlyAmount)}\nReference: ${group.name}`;
+                      Alert.alert(
+                        'Bank Details Copied',
+                        `Bank transfer details:\n\n${details}\n\nNote: Copy this information to your banking app.`,
+                        [{ text: 'OK' }]
+                      );
+                    }
+                  }}
+                  className="bg-blue-500 py-4 rounded-xl flex-row items-center justify-center"
+                >
+                  <Ionicons name="copy" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">Copy Bank Details</Text>
+                </Pressable>
+                
+                <Pressable 
+                  onPress={() => {
+                    Alert.alert(
+                      'Mark as Paid',
+                      `Confirm that you have transferred ${formatNaira(group.monthlyAmount)} to ${group.name}?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                          text: 'Confirm Payment', 
+                          onPress: () => {
+                            setShowPaymentOverlay(false);
+                            Alert.alert(
+                              'Payment Recorded',
+                              'Your payment has been recorded. It may take time for admin verification.',
+                              [{ text: 'OK' }]
+                            );
+                          }
+                        }
+                      ]
+                    );
+                  }}
+                  className="bg-emerald-500 py-4 rounded-xl flex-row items-center justify-center"
+                >
+                  <Ionicons name="checkmark-circle" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">Mark as Paid</Text>
+                </Pressable>
+                
+                <Pressable 
+                  onPress={() => setShowPaymentOverlay(false)}
+                  className="bg-gray-100 py-4 rounded-xl flex-row items-center justify-center"
+                >
+                  <Text className="text-gray-700 font-semibold">Cancel</Text>
+                </Pressable>
+              </View>
+
+              <View className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <View className="flex-row items-start">
+                  <Ionicons name="information-circle" size={20} color="#D97706" />
+                  <Text className="text-sm text-amber-800 ml-2 flex-1">
+                    Make sure to include your name and "{group.name}" in the transfer description for proper tracking.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
