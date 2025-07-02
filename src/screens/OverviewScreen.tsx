@@ -43,7 +43,8 @@ export default function OverviewScreen({ navigation }: any) {
   const { 
     getVisibleBanners, 
     dismissBanner, 
-    addBanner 
+    addBanner,
+    unreadCount 
   } = useNotificationStore();
 
   // Initialize with mock data if no groups exist
@@ -196,8 +197,18 @@ export default function OverviewScreen({ navigation }: any) {
             <Text className="text-2xl font-bold text-gray-900">{getDisplayName()}</Text>
           </View>
           <View className="flex-row items-center gap-3">
-            <Pressable className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+            <Pressable 
+              onPress={() => navigation.navigate('Notifications')}
+              className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center relative"
+            >
               <Ionicons name="notifications-outline" size={24} color="#6B7280" />
+              {unreadCount > 0 && (
+                <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center">
+                  <Text className="text-white text-xs font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </Pressable>
             <Pressable 
               onPress={() => setShowProfile(true)}
@@ -380,7 +391,8 @@ export default function OverviewScreen({ navigation }: any) {
       {/* Profile Modal */}
       <ProfileScreen 
         visible={showProfile} 
-        onClose={() => setShowProfile(false)} 
+        onClose={() => setShowProfile(false)}
+        navigation={navigation}
       />
     </ScrollView>
   );

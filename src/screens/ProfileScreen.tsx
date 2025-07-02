@@ -19,9 +19,10 @@ import { cn } from '../utils/cn';
 interface ProfileScreenProps {
   visible: boolean;
   onClose: () => void;
+  navigation?: any;
 }
 
-export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) {
+export default function ProfileScreen({ visible, onClose, navigation }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { profile, getInitials } = useUserStore();
   const { groups, payments } = useGroupStore();
@@ -59,31 +60,59 @@ export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) 
       title: 'Edit Profile',
       subtitle: 'Update your personal information',
       icon: 'person-outline' as const,
-      onPress: () => {},
+      onPress: () => {
+        onClose();
+        navigation?.navigate('EditProfile');
+      },
     },
     {
       title: 'Notification Settings',
       subtitle: 'Manage your alerts and reminders',
       icon: 'notifications-outline' as const,
-      onPress: () => {},
+      onPress: () => {
+        onClose();
+        navigation?.navigate('NotificationSettings');
+      },
     },
     {
       title: 'Privacy & Security',
       subtitle: 'Control your account security',
       icon: 'shield-outline' as const,
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert(
+          'Privacy & Security',
+          'Your account is protected with industry-standard security measures. Two-factor authentication and additional security features will be available soon.',
+          [{ text: 'OK' }]
+        );
+      },
     },
     {
       title: 'Help & Support',
       subtitle: 'Get help with Adashi',
       icon: 'help-circle-outline' as const,
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert(
+          'Help & Support',
+          'Need help? Contact our support team:\n\nEmail: support@adashi.ng\nPhone: +234 1 234 5678\nWhatsApp: +234 809 123 4567\n\nWe typically respond within 24 hours.',
+          [{ text: 'OK' }]
+        );
+      },
     },
     {
       title: 'About',
       subtitle: 'App version and terms',
       icon: 'information-circle-outline' as const,
-      onPress: () => {},
+      onPress: () => {
+        Alert.alert(
+          'About Adashi',
+          'Version 1.0.0\n\nAdashi helps Nigerian communities manage their rotating savings and credit associations (ROSCAs) digitally.\n\n© 2025 Adashi. All rights reserved.',
+          [
+            { text: 'Terms of Service', onPress: () => {} },
+            { text: 'Privacy Policy', onPress: () => {} },
+            { text: 'OK' }
+          ]
+        );
+      },
     },
   ];
 

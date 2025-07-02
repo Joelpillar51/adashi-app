@@ -42,3 +42,8 @@ export const formatChatTime = (date: Date | string): string => {
     return format(dateObj, 'MMM dd');
   }
 };
+
+export const getRelativeTime = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  return formatDistanceToNow(dateObj, { addSuffix: true });
+};

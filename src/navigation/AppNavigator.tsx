@@ -11,6 +11,9 @@ import RequestInviteScreen from '../screens/RequestInviteScreen';
 import InviteRequestsScreen from '../screens/InviteRequestsScreen';
 import PositionAssignmentScreen from '../screens/PositionAssignmentScreen';
 import ManualPositionAssignmentScreen from '../screens/ManualPositionAssignmentScreen';
+import NotificationScreen from '../screens/NotificationScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +35,9 @@ export default function AppNavigator() {
       <Stack.Screen name="InviteRequests" component={InviteRequestsScreen} />
       <Stack.Screen name="PositionAssignment" component={PositionAssignmentScreen} />
       <Stack.Screen name="ManualPositionAssignment" component={ManualPositionAssignmentScreen} />
+      <Stack.Screen name="Notifications" component={NotificationScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
     </Stack.Navigator>
   );
 }

@@ -95,6 +95,22 @@ export interface NotificationBanner {
   createdAt: string;
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'payment_reminder' | 'collection_ready' | 'group_invite' | 'payment_received' | 'system' | 'group_update' | 'penalty_applied' | 'member_joined' | 'member_left';
+  groupId?: string;
+  groupName?: string;
+  isRead: boolean;
+  createdAt: string;
+  actionType?: 'navigate' | 'external_link' | 'none';
+  actionData?: any;
+  priority: 'high' | 'medium' | 'low';
+  amount?: number;
+  memberName?: string;
+}
+
 // Nigerian banks for reference
 export const NIGERIAN_BANKS = [
   'First Bank of Nigeria',
