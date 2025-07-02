@@ -4,7 +4,7 @@ import { Group, User, Payment, TimelineItem, Message } from '../types';
 export const mockGroups: Group[] = [
   {
     id: 'group1',
-    name: 'Lagos Friends Circle',
+    name: 'Lapi',
     description: 'Monthly savings group for old university friends',
     memberCount: 8,
     monthlyAmount: 50000,

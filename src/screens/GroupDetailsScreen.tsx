@@ -385,38 +385,44 @@ export default function GroupDetailsScreen({ route, navigation }: GroupDetailsSc
                 </View>
               </View>
 
-              {group.accountDetails && (
-                <View className="bg-gray-50 rounded-2xl p-4 mb-6">
-                  <Text className="text-base font-semibold text-gray-900 mb-3">Bank Transfer Details</Text>
-                  <View className="gap-2">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-sm text-gray-600">Bank Name</Text>
-                      <Text className="text-sm font-medium text-gray-900">{group.accountDetails.bankName}</Text>
-                    </View>
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-sm text-gray-600">Account Number</Text>
-                      <Text className="text-sm font-mono font-medium text-gray-900">{group.accountDetails.accountNumber}</Text>
-                    </View>
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-sm text-gray-600">Account Name</Text>
-                      <Text className="text-sm font-medium text-gray-900">{group.accountDetails.accountName}</Text>
-                    </View>
+              <View className="bg-gray-50 rounded-2xl p-4 mb-6">
+                <Text className="text-base font-semibold text-gray-900 mb-3">Bank Transfer Details</Text>
+                <View className="gap-2">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm text-gray-600">Bank Name</Text>
+                    <Text className="text-sm font-medium text-gray-900">
+                      {group.accountDetails?.bankName || 'Guaranty Trust Bank (GTBank)'}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm text-gray-600">Account Number</Text>
+                    <Text className="text-sm font-mono font-medium text-gray-900">
+                      {group.accountDetails?.accountNumber || '0123456789'}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm text-gray-600">Account Name</Text>
+                    <Text className="text-sm font-medium text-gray-900">
+                      {group.accountDetails?.accountName || 'ADUNNI OKAFOR'}
+                    </Text>
                   </View>
                 </View>
-              )}
+              </View>
 
               <View className="gap-3">
                 <Pressable 
                   onPress={() => {
-                    const bankDetails = group.accountDetails;
-                    if (bankDetails) {
-                      const details = `Bank: ${bankDetails.bankName}\nAccount: ${bankDetails.accountNumber}\nName: ${bankDetails.accountName}\nAmount: ${formatNaira(group.monthlyAmount)}\nReference: ${group.name}`;
-                      Alert.alert(
-                        'Bank Details Copied',
-                        `Bank transfer details:\n\n${details}\n\nNote: Copy this information to your banking app.`,
-                        [{ text: 'OK' }]
-                      );
-                    }
+                    const bankDetails = group.accountDetails || {
+                      bankName: 'Guaranty Trust Bank (GTBank)',
+                      accountNumber: '0123456789',
+                      accountName: 'ADUNNI OKAFOR'
+                    };
+                    const details = `Bank: ${bankDetails.bankName}\nAccount: ${bankDetails.accountNumber}\nName: ${bankDetails.accountName}\nAmount: ${formatNaira(group.monthlyAmount)}\nReference: ${group.name}`;
+                    Alert.alert(
+                      'Bank Details Copied',
+                      `Bank transfer details:\n\n${details}\n\nNote: Copy this information to your banking app.`,
+                      [{ text: 'OK' }]
+                    );
                   }}
                   className="bg-blue-500 py-4 rounded-xl flex-row items-center justify-center"
                 >
