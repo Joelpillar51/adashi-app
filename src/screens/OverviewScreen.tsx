@@ -63,7 +63,6 @@ export default function OverviewScreen({ navigation }: any) {
     }
   }, []);
 
-  const totalSaved = getTotalSaved();
   const upcomingPayments = getUpcomingPayments();
   const activeGroups = groups.filter((group) => group.status === 'active');
   const visibleBanners = getVisibleBanners();
@@ -75,6 +74,23 @@ export default function OverviewScreen({ navigation }: any) {
     return 'evening';
   };
 
+  // Calculate user-specific statistics
+  const myContributions = payments.filter(p => p.type === 'contribution');
+  const myCollections = payments.filter(p => p.type === 'collection' && (p.recipient?.includes('Me') || p.recipient?.includes('Adunni')));
+  const completedContributions = myContributions.filter(p => p.status === 'completed');
+  const completedCollections = myCollections.filter(p => p.status === 'completed');
+  
+  const userStats = {
+    totalContributed: myContributions.reduce((sum, p) => sum + p.amount, 0),
+    totalCollected: myCollections.reduce((sum, p) => sum + p.amount, 0),
+    totalGroups: groups.length,
+    activeGroups: activeGroups.length,
+    completedCycles: completedCollections.length,
+    contributionCount: completedContributions.length,
+    pendingContributions: myContributions.filter(p => p.status === 'pending').length,
+    successRate: myContributions.length > 0 ? Math.round((completedContributions.length / myContributions.length) * 100) : 100,
+  };
+
   const nextPayment = groups.reduce((earliest, group) => {
     const groupDays = getDaysUntil(group.nextPaymentDue);
     return !earliest || groupDays < getDaysUntil(earliest.nextPaymentDue) ? group : earliest;
@@ -82,46 +98,46 @@ export default function OverviewScreen({ navigation }: any) {
 
   const stats = [
     {
-      label: 'Total Saved',
-      value: formatCompactNaira(totalSaved),
-      subtitle: 'Across all groups',
-      icon: 'wallet' as const,
-      color: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
-      textColor: 'text-emerald-700',
-    },
-    {
-      label: 'Active Groups',
-      value: activeGroups.length.toString(),
-      subtitle: `${groups.length} total groups`,
-      icon: 'people' as const,
+      label: 'Total Contributed',
+      value: formatCompactNaira(userStats.totalContributed),
+      subtitle: 'All-time contributions',
+      icon: 'arrow-up-circle' as const,
       color: 'bg-blue-50',
       iconColor: 'text-blue-600',
       textColor: 'text-blue-700',
     },
     {
-      label: 'Next Payment',
-      value: nextPayment ? `${getDaysUntil(nextPayment.nextPaymentDue)} days` : 'None',
-      subtitle: nextPayment ? nextPayment.name : 'No pending payments',
-      icon: 'time' as const,
-      color: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-      textColor: 'text-amber-700',
+      label: 'Total Collected',
+      value: formatCompactNaira(userStats.totalCollected),
+      subtitle: 'Money received from groups',
+      icon: 'arrow-down-circle' as const,
+      color: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      textColor: 'text-emerald-700',
     },
     {
-      label: 'My Position',
-      value: nextPayment ? `#${nextPayment.myPosition}` : 'N/A',
-      subtitle: 'Current rotation order',
-      icon: 'medal' as const,
+      label: 'My Groups',
+      value: userStats.totalGroups.toString(),
+      subtitle: `${userStats.activeGroups} active groups`,
+      icon: 'people' as const,
       color: 'bg-purple-50',
       iconColor: 'text-purple-600',
       textColor: 'text-purple-700',
     },
     {
-      label: 'Contributions',
-      value: payments.filter(p => p.type === 'contribution').length.toString(),
-      subtitle: 'Total payments made',
-      icon: 'card' as const,
+      label: 'Completed Cycles',
+      value: userStats.completedCycles.toString(),
+      subtitle: 'Times I collected funds',
+      icon: 'checkmark-circle' as const,
+      color: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      textColor: 'text-amber-700',
+    },
+    {
+      label: 'Success Rate',
+      value: `${userStats.successRate}%`,
+      subtitle: `${userStats.contributionCount} successful payments`,
+      icon: 'trophy' as const,
       color: 'bg-indigo-50',
       iconColor: 'text-indigo-600',
       textColor: 'text-indigo-700',
@@ -277,45 +293,82 @@ export default function OverviewScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Recent Groups */}
+      {/* My Groups */}
       <View className="px-6 mb-8">
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-lg font-semibold text-gray-900">Your Groups</Text>
+          <Text className="text-lg font-semibold text-gray-900">My Groups</Text>
           <Pressable onPress={() => navigation.navigate('Groups')}>
             <Text className="text-blue-600 font-medium">View All</Text>
           </Pressable>
         </View>
         <View className="gap-3">
-          {activeGroups.slice(0, 2).map((group) => (
-            <Pressable
-              key={group.id}
-              onPress={() => navigation.navigate('Groups')}
-              className="bg-white rounded-2xl p-4 border border-gray-100"
-            >
-              <View className="flex-row items-center justify-between mb-3">
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-gray-900">{group.name}</Text>
-                  <Text className="text-sm text-gray-600 mt-1">
-                    {group.memberCount} members • {formatNaira(group.monthlyAmount)}/month
+          {activeGroups.slice(0, 2).map((group) => {
+            const myNextPayment = getDaysUntil(group.nextPaymentDue);
+            const isPaymentDue = myNextPayment <= 3;
+            
+            return (
+              <Pressable
+                key={group.id}
+                onPress={() => navigation.navigate('GroupDetails', { groupId: group.id })}
+                className="bg-white rounded-2xl p-4 border border-gray-100"
+              >
+                <View className="flex-row items-center justify-between mb-3">
+                  <View className="flex-1">
+                    <Text className="text-base font-semibold text-gray-900">{group.name}</Text>
+                    <Text className="text-sm text-gray-600 mt-1">
+                      My Position: #{group.myPosition} • {formatNaira(group.monthlyAmount)}/month
+                    </Text>
+                  </View>
+                  <View className={cn(
+                    'px-3 py-1 rounded-full',
+                    isPaymentDue ? 'bg-amber-50' : 'bg-emerald-50'
+                  )}>
+                    <Text className={cn(
+                      'text-sm font-medium',
+                      isPaymentDue ? 'text-amber-700' : 'text-emerald-700'
+                    )}>
+                      {group.role}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <Text className={cn(
+                    'text-sm',
+                    isPaymentDue ? 'text-amber-600 font-medium' : 'text-gray-600'
+                  )}>
+                    Next payment: {myNextPayment > 0 ? `${myNextPayment} days` : 'Today'}
+                  </Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                    Progress: {Math.round(group.cycleProgress)}%
                   </Text>
                 </View>
-                <View className="bg-emerald-50 px-3 py-1 rounded-full">
-                  <Text className="text-sm font-medium text-emerald-700">
-                    {Math.round(group.cycleProgress)}% complete
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center justify-between">
-                <Text className="text-sm text-gray-600">
-                  Next: {formatWATDate(group.nextPaymentDue)}
-                </Text>
-                <Text className="text-sm font-medium text-gray-900">
-                  Total: {formatCompactNaira(group.totalSaved)}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
+                {isPaymentDue && (
+                  <View className="mt-2 p-2 bg-amber-50 rounded-lg">
+                    <Text className="text-xs text-amber-700">💰 Payment due soon!</Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
         </View>
+        
+        {activeGroups.length === 0 && (
+          <View className="bg-gray-50 rounded-2xl p-6 items-center">
+            <View className="w-16 h-16 bg-gray-200 rounded-full items-center justify-center mb-4">
+              <Ionicons name="people-outline" size={24} color="#9CA3AF" />
+            </View>
+            <Text className="text-base font-semibold text-gray-900 mb-2">No Active Groups</Text>
+            <Text className="text-sm text-gray-600 text-center mb-4">
+              Join or create a savings circle to start building wealth together
+            </Text>
+            <Pressable 
+              onPress={() => navigation.navigate('Groups')}
+              className="bg-blue-500 px-4 py-2 rounded-lg"
+            >
+              <Text className="text-white font-medium">Get Started</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Profile Modal */}
