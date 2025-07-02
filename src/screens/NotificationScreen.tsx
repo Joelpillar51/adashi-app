@@ -101,7 +101,14 @@ export default function NotificationScreen() {
         
         // Check if navigation object exists and has navigate method
         if (nav && typeof nav.navigate === 'function') {
-          if (params) {
+          // Special handling for nested tab navigation
+          if (screen === 'MainTabs' && params && params.screen) {
+            // Navigate to the main tab navigator and then to the specific tab
+            nav.navigate('MainTabs', { screen: params.screen });
+          } else if (screen === 'Groups' || screen === 'Payments' || screen === 'Members' || screen === 'Overview') {
+            // These are tab screens, navigate via MainTabs
+            nav.navigate('MainTabs', { screen: screen });
+          } else if (params) {
             nav.navigate(screen, params);
           } else {
             nav.navigate(screen);
@@ -111,9 +118,10 @@ export default function NotificationScreen() {
         }
       } catch (error) {
         // Fallback if navigation fails - just show alert with notification content
+        console.error('Navigation error:', error);
         Alert.alert(
           notification.title,
-          notification.message + '\n\nNavigation is temporarily unavailable.',
+          notification.message + '\n\nUnable to navigate to the requested screen.',
           [{ text: 'OK' }]
         );
       }
