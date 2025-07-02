@@ -12,11 +12,13 @@ import { useGroupStore } from '../state/groupStore';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { getDaysUntil, formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
+import CreateGroupModal from '../components/CreateGroupModal';
 
 export default function GroupsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { groups, setActiveGroup } = useGroupStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const filteredGroups = groups.filter((group) =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,7 +60,10 @@ export default function GroupsScreen({ navigation }: any) {
       <View className="bg-white px-6 py-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-2xl font-bold text-gray-900">My Groups</Text>
-          <Pressable className="w-10 h-10 bg-blue-500 rounded-full items-center justify-center">
+          <Pressable 
+            onPress={() => navigation.navigate('CreateGroup')}
+            className="w-10 h-10 bg-blue-500 rounded-full items-center justify-center"
+          >
             <Ionicons name="add" size={24} color="white" />
           </Pressable>
         </View>
@@ -91,7 +96,10 @@ export default function GroupsScreen({ navigation }: any) {
               {searchQuery ? 'Try adjusting your search terms' : 'Create your first saving circle to get started'}
             </Text>
             {!searchQuery && (
-              <Pressable className="bg-blue-500 px-6 py-3 rounded-xl">
+              <Pressable 
+                onPress={() => navigation.navigate('CreateGroup')}
+                className="bg-blue-500 px-6 py-3 rounded-xl"
+              >
                 <Text className="text-white font-semibold">Create Group</Text>
               </Pressable>
             )}
@@ -180,6 +188,12 @@ export default function GroupsScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      {/* Create Group Modal */}
+      <CreateGroupModal 
+        visible={showCreateModal} 
+        onClose={() => setShowCreateModal(false)} 
+      />
     </View>
   );
 }

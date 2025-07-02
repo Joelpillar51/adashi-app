@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import GroupDetailsScreen from '../screens/GroupDetailsScreen';
 import GroupChatScreen from '../screens/GroupChatScreen';
 import RotationTimelineScreen from '../screens/RotationTimelineScreen';
+import CreateGroupScreen from '../screens/CreateGroupScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function AppNavigator() {
       <Stack.Screen name="GroupDetails" component={GroupDetailsScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="RotationTimeline" component={RotationTimelineScreen} />
+      <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
     </Stack.Navigator>
   );
 }

@@ -112,18 +112,18 @@ export default function OverviewScreen({ navigation }: any) {
       onPress: () => navigation.navigate('Groups'),
     },
     {
+      title: 'Create Group',
+      subtitle: 'Start a new savings circle',
+      icon: 'add-circle' as const,
+      color: 'bg-indigo-500',
+      onPress: () => navigation.navigate('CreateGroup'),
+    },
+    {
       title: 'Make Payment',
       subtitle: 'Contribute to your groups',
       icon: 'card' as const,
       color: 'bg-emerald-500',
       onPress: () => navigation.navigate('Payments'),
-    },
-    {
-      title: 'View Members',
-      subtitle: 'Contact group members',
-      icon: 'person-add' as const,
-      color: 'bg-purple-500',
-      onPress: () => navigation.navigate('Members'),
     },
   ];
 
