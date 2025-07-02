@@ -154,7 +154,7 @@ export default function OverviewScreen({ navigation }: any) {
             </Pressable>
           </View>
         </View>
-        <Text className="text-sm text-gray-500 mt-1">Track your savings circles</Text>
+        <Text className="text-sm text-gray-500 mt-1">Your digital savings circle</Text>
       </View>
 
       {/* Stats Cards */}

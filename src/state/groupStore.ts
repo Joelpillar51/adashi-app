@@ -113,7 +113,7 @@ export const useGroupStore = create<GroupState>()(
       },
     }),
     {
-      name: 'contrib-tracker-groups',
+      name: 'adashi-groups',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         groups: state.groups,

@@ -5,11 +5,13 @@ import {
   ScrollView,
   Pressable,
   Modal,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../state/userStore';
 import { useGroupStore } from '../state/groupStore';
+import { useAuthStore } from '../state/authStore';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
 import { formatWATDate } from '../utils/date';
 import { cn } from '../utils/cn';
@@ -23,6 +25,7 @@ export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) 
   const insets = useSafeAreaInsets();
   const { profile, getInitials } = useUserStore();
   const { groups, payments } = useGroupStore();
+  const { signOut } = useAuthStore();
 
   if (!profile) return null;
 
@@ -72,7 +75,7 @@ export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) 
     },
     {
       title: 'Help & Support',
-      subtitle: 'Get help with ContribTracker',
+      subtitle: 'Get help with Adashi',
       icon: 'help-circle-outline' as const,
       onPress: () => {},
     },
@@ -83,6 +86,24 @@ export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) 
       onPress: () => {},
     },
   ];
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of your Adashi account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: () => {
+            signOut();
+            onClose();
+          }
+        },
+      ]
+    );
+  };
 
   return (
     <Modal
@@ -161,6 +182,17 @@ export default function ProfileScreen({ visible, onClose }: ProfileScreenProps) 
                   </Pressable>
                 ))}
               </View>
+            </View>
+
+            {/* Sign Out */}
+            <View className="px-6 mb-6">
+              <Pressable
+                onPress={handleSignOut}
+                className="bg-red-50 border border-red-200 py-4 rounded-xl flex-row items-center justify-center"
+              >
+                <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+                <Text className="text-red-600 font-semibold ml-2">Sign Out</Text>
+              </Pressable>
             </View>
 
             {/* Member Since */}

@@ -50,7 +50,7 @@ export const useNotificationStore = create<NotificationState>()(
       },
     }),
     {
-      name: 'contrib-tracker-notifications',
+      name: 'adashi-notifications',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         banners: state.banners,

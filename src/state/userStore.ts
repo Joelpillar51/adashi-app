@@ -60,7 +60,7 @@ export const useUserStore = create<UserState>()(
       },
     }),
     {
-      name: 'contrib-tracker-user',
+      name: 'adashi-user',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         profile: state.profile,
