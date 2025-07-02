@@ -44,7 +44,7 @@ export default function NotificationScreen({ navigation }: NotificationScreenPro
       default:
         return true;
     }
-  });
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const getNotificationIcon = (type: string, priority: string) => {
     const iconColor = priority === 'high' ? '#DC2626' : priority === 'medium' ? '#D97706' : '#6B7280';

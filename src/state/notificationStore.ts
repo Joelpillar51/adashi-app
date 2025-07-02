@@ -7,6 +7,7 @@ interface NotificationState {
   banners: NotificationBanner[];
   notifications: Notification[];
   unreadCount: number;
+  isInitialized: boolean;
   
   // Actions
   addBanner: (banner: Omit<NotificationBanner, 'id' | 'createdAt'>) => void;
@@ -141,6 +142,7 @@ export const useNotificationStore = create<NotificationState>()(
       banners: [],
       notifications: mockNotifications,
       unreadCount: mockNotifications.filter(n => !n.isRead).length,
+      isInitialized: true,
 
       addBanner: (banner) => {
         const newBanner: NotificationBanner = {
@@ -241,6 +243,7 @@ export const useNotificationStore = create<NotificationState>()(
         banners: state.banners,
         notifications: state.notifications,
         unreadCount: state.unreadCount,
+        isInitialized: state.isInitialized,
       }),
     }
   )
