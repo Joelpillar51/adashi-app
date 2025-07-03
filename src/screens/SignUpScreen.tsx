@@ -16,9 +16,10 @@ import { cn } from '../utils/cn';
 
 interface SignUpScreenProps {
   onNavigateToSignIn: () => void;
+  onNavigateToOTPVerification?: (email: string) => void;
 }
 
-export default function SignUpScreen({ onNavigateToSignIn }: SignUpScreenProps) {
+export default function SignUpScreen({ onNavigateToSignIn, onNavigateToOTPVerification }: SignUpScreenProps) {
   const insets = useSafeAreaInsets();
   const { signUp, signInWithGoogle, isLoading } = useAuthStore();
   const [formData, setFormData] = useState({
@@ -97,7 +98,7 @@ export default function SignUpScreen({ onNavigateToSignIn }: SignUpScreenProps) 
     if (!validateForm()) return;
     
     try {
-      const { error } = await signUp(
+      const { error, needsVerification } = await signUp(
         formData.email.trim(),
         formData.password,
         formData.fullName.trim(),
@@ -110,16 +111,23 @@ export default function SignUpScreen({ onNavigateToSignIn }: SignUpScreenProps) 
           error.message || 'Unable to create account. Please try again.',
           [{ text: 'OK' }]
         );
+      } else if (needsVerification) {
+        // Navigate to OTP verification screen
+        if (onNavigateToOTPVerification) {
+          onNavigateToOTPVerification(formData.email.trim());
+        } else {
+          Alert.alert(
+            'Check Your Email',
+            'We\'ve sent a verification code to your email. Please verify your account to continue.',
+            [{ text: 'OK', onPress: onNavigateToSignIn }]
+          );
+        }
       } else {
+        // User is immediately signed in (shouldn't happen with email confirmation)
         Alert.alert(
           'Account Created!',
-          'Please check your email to verify your account before signing in.',
-          [
-            { 
-              text: 'Go to Sign In', 
-              onPress: onNavigateToSignIn 
-            }
-          ]
+          'Your account has been created successfully.',
+          [{ text: 'OK' }]
         );
       }
     } catch (error) {

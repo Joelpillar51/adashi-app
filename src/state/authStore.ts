@@ -18,7 +18,9 @@ interface AuthState {
   
   // Actions
   initialize: () => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: AuthError | null; needsVerification?: boolean }>;
+  verifyOTP: (email: string, token: string) => Promise<{ error: AuthError | null }>;
+  resendOTP: (email: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -134,8 +136,14 @@ export const useAuthStore = create<AuthState>()(
             return { error };
           }
 
-          // Create profile record
-          if (data.user) {
+          // Check if user needs email verification
+          if (data.user && !data.session) {
+            return { error: null, needsVerification: true };
+          }
+
+          // If user is immediately signed in (shouldn't happen with email confirmation enabled)
+          if (data.user && data.session) {
+            // Create profile record
             const { error: profileError } = await supabase
               .from('profiles')
               .insert({
@@ -150,12 +158,69 @@ export const useAuthStore = create<AuthState>()(
             }
           }
 
-          return { error: null };
+          return { error: null, needsVerification: !data.session };
         } catch (error) {
           console.error('Sign up error:', error);
           return { error: error as AuthError };
         } finally {
           set({ isLoading: false });
+        }
+      },
+
+      // Verify OTP for email confirmation
+      verifyOTP: async (email: string, token: string) => {
+        try {
+          set({ isLoading: true });
+
+          const { data, error } = await supabase.auth.verifyOtp({
+            email,
+            token,
+            type: 'signup'
+          });
+
+          if (error) {
+            return { error };
+          }
+
+          // Create profile record after successful verification
+          if (data.user) {
+            const { full_name, phone } = data.user.user_metadata;
+            
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email: data.user.email!,
+                full_name: full_name || null,
+                phone: phone || null,
+              });
+
+            if (profileError && profileError.code !== '23505') { // Ignore duplicate key error
+              console.error('Profile creation error:', profileError);
+            }
+          }
+
+          return { error: null };
+        } catch (error) {
+          console.error('OTP verification error:', error);
+          return { error: error as AuthError };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Resend OTP
+      resendOTP: async (email: string) => {
+        try {
+          const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+          });
+
+          return { error };
+        } catch (error) {
+          console.error('Resend OTP error:', error);
+          return { error: error as AuthError };
         }
       },
 

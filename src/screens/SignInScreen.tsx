@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../state/authStore';
+import { supabase } from '../config/supabase';
 import { cn } from '../utils/cn';
 
 interface SignInScreenProps {
@@ -58,11 +59,41 @@ export default function SignInScreen({
       const { error } = await signIn(formData.email.trim(), formData.password);
       
       if (error) {
-        Alert.alert(
-          'Sign In Failed',
-          error.message || 'Please check your email and password and try again.',
-          [{ text: 'OK' }]
-        );
+        // Check if it's an email not confirmed error
+        if (error.message?.includes('email not confirmed') || error.message?.includes('Email not confirmed')) {
+          Alert.alert(
+            'Email Not Verified',
+            'Please check your email and click the verification link before signing in.',
+            [
+              { text: 'OK' },
+              { 
+                text: 'Resend Email', 
+                onPress: async () => {
+                  try {
+                    const { error: resendError } = await supabase.auth.resend({
+                      type: 'signup',
+                      email: formData.email.trim(),
+                    });
+                    
+                    if (resendError) {
+                      Alert.alert('Error', 'Unable to resend verification email.');
+                    } else {
+                      Alert.alert('Email Sent', 'Verification email has been resent.');
+                    }
+                  } catch (err) {
+                    Alert.alert('Error', 'Unable to resend verification email.');
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Sign In Failed',
+            error.message || 'Please check your email and password and try again.',
+            [{ text: 'OK' }]
+          );
+        }
       }
       // If successful, the auth state will update automatically
     } catch (error) {
