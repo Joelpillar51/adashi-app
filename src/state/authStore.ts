@@ -143,15 +143,13 @@ export const useAuthStore = create<AuthState>()(
 
           // If user is immediately signed in (shouldn't happen with email confirmation enabled)
           if (data.user && data.session) {
-            // Create profile record
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                email: data.user.email!,
-                full_name: fullName,
-                phone: phone || null,
-              });
+            // Create profile record using upsert function
+            const { error: profileError } = await supabase.rpc('upsert_profile', {
+              user_id: data.user.id,
+              user_email: data.user.email!,
+              user_full_name: fullName,
+              user_phone: phone || null,
+            });
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
@@ -182,20 +180,18 @@ export const useAuthStore = create<AuthState>()(
             return { error };
           }
 
-          // Create profile record after successful verification
+          // Create profile record after successful verification using upsert function
           if (data.user) {
             const { full_name, phone } = data.user.user_metadata;
             
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                email: data.user.email!,
-                full_name: full_name || null,
-                phone: phone || null,
-              });
+            const { error: profileError } = await supabase.rpc('upsert_profile', {
+              user_id: data.user.id,
+              user_email: data.user.email!,
+              user_full_name: full_name || null,
+              user_phone: phone || null,
+            });
 
-            if (profileError && profileError.code !== '23505') { // Ignore duplicate key error
+            if (profileError) {
               console.error('Profile creation error:', profileError);
             }
           }
