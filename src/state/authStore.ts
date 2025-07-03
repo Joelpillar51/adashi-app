@@ -18,7 +18,7 @@ interface AuthState {
   
   // Actions
   initialize: () => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: AuthError | null; needsVerification?: boolean }>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: AuthError | null; needsVerification?: boolean; errorCode?: string }>;
   verifyOTP: (email: string, token: string) => Promise<{ error: AuthError | null }>;
   resendOTP: (email: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
@@ -121,8 +121,24 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true });
           
+          // First check if email already exists in profiles table
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('email', email.toLowerCase())
+            .single();
+          
+          if (existingProfile) {
+            const customError: AuthError = {
+              name: 'AuthError',
+              message: 'An account with this email already exists. Please sign in instead.',
+              status: 400,
+            };
+            return { error: customError, errorCode: 'email_already_exists' };
+          }
+          
           const { data, error } = await supabase.auth.signUp({
-            email,
+            email: email.toLowerCase(),
             password,
             options: {
               data: {
@@ -133,7 +149,9 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (error) {
-            return { error };
+            // Map common Supabase errors to user-friendly messages
+            const mappedError = mapAuthError(error);
+            return { error: mappedError, errorCode: error.message };
           }
 
           // Check if user needs email verification
@@ -153,13 +171,15 @@ export const useAuthStore = create<AuthState>()(
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
+              // Don't fail signup for profile creation errors, just log them
             }
           }
 
           return { error: null, needsVerification: !data.session };
         } catch (error) {
           console.error('Sign up error:', error);
-          return { error: error as AuthError };
+          const mappedError = mapAuthError(error as AuthError);
+          return { error: mappedError };
         } finally {
           set({ isLoading: false });
         }
@@ -387,3 +407,32 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Helper function to map Supabase auth errors to user-friendly messages
+function mapAuthError(error: AuthError): AuthError {
+  const userFriendlyMessages: Record<string, string> = {
+    'Invalid login credentials': 'Invalid email or password. Please check your credentials and try again.',
+    'Email not confirmed': 'Please verify your email address before signing in.',
+    'User already registered': 'An account with this email already exists. Please sign in instead.',
+    'Signup disabled': 'New account registration is currently disabled. Please contact support.',
+    'Password should be at least 6 characters': 'Password must be at least 6 characters long.',
+    'Invalid email': 'Please enter a valid email address.',
+    'Weak password': 'Password is too weak. Please use a stronger password with letters, numbers, and special characters.',
+    'Email rate limit exceeded': 'Too many emails sent. Please wait a few minutes before trying again.',
+    'SMS rate limit exceeded': 'Too many SMS messages sent. Please wait a few minutes before trying again.',
+    'Invalid phone number': 'Please enter a valid phone number.',
+    'Phone number already registered': 'An account with this phone number already exists.',
+    'Email already registered': 'An account with this email already exists. Please sign in instead.',
+    'Token has expired or is invalid': 'Verification code has expired or is invalid. Please request a new one.',
+    'Invalid verification code': 'Invalid verification code. Please check and try again.',
+    'Network request failed': 'Network connection failed. Please check your internet connection and try again.',
+    'Unable to validate email address: invalid format': 'Please enter a valid email address.',
+  };
+
+  const message = userFriendlyMessages[error.message] || error.message || 'An unexpected error occurred. Please try again.';
+  
+  return {
+    ...error,
+    message,
+  };
+}
