@@ -372,12 +372,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       getInitialRoute: () => {
-        const { isAuthenticated, hasSeenOnboarding, hasSeenSplash, isInitialized } = get();
+        const { hasSeenOnboarding, hasSeenSplash, isInitialized, session } = get();
         
         if (!isInitialized) return 'Splash'; // Show loading while initializing
         if (!hasSeenSplash) return 'Splash';
         if (!hasSeenOnboarding) return 'Onboarding';
-        if (!isAuthenticated()) return 'Auth';
+        if (!session) return 'Auth';
         return 'Main';
       },
     }),
