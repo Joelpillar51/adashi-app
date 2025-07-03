@@ -8,26 +8,21 @@ import AppNavigator from './AppNavigator';
 
 export default function RootNavigator() {
   const { 
-    isAuthenticated, 
+    isAuthenticated,
     hasSeenOnboarding, 
     hasSeenSplash,
+    isInitialized,
+    initialize,
     markOnboardingComplete, 
     markSplashComplete,
     getInitialRoute 
   } = useAuthStore();
   
   const [currentRoute, setCurrentRoute] = useState<'Splash' | 'Onboarding' | 'Auth' | 'Main'>('Splash');
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Wait for auth store to be hydrated from AsyncStorage
-    const timer = setTimeout(() => {
-      const initialRoute = getInitialRoute();
-      setCurrentRoute(initialRoute);
-      setIsInitialized(true);
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Initialize Supabase auth
+    initialize();
   }, []);
 
   useEffect(() => {
@@ -35,12 +30,12 @@ export default function RootNavigator() {
       const route = getInitialRoute();
       setCurrentRoute(route);
     }
-  }, [isAuthenticated, hasSeenOnboarding, hasSeenSplash, isInitialized]);
+  }, [isAuthenticated(), hasSeenOnboarding, hasSeenSplash, isInitialized]);
 
   const handleSplashComplete = () => {
     markSplashComplete();
     if (hasSeenOnboarding) {
-      setCurrentRoute(isAuthenticated ? 'Main' : 'Auth');
+      setCurrentRoute(isAuthenticated() ? 'Main' : 'Auth');
     } else {
       setCurrentRoute('Onboarding');
     }
@@ -48,7 +43,7 @@ export default function RootNavigator() {
 
   const handleOnboardingComplete = () => {
     markOnboardingComplete();
-    setCurrentRoute(isAuthenticated ? 'Main' : 'Auth');
+    setCurrentRoute(isAuthenticated() ? 'Main' : 'Auth');
   };
 
   if (!isInitialized) {

@@ -11,27 +11,26 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../state/authStore';
 import { cn } from '../utils/cn';
 
 interface SignInScreenProps {
-  onSignIn: () => void;
   onNavigateToSignUp: () => void;
   onNavigateToForgotPassword: () => void;
 }
 
 export default function SignInScreen({ 
-  onSignIn, 
   onNavigateToSignUp, 
   onNavigateToForgotPassword 
 }: SignInScreenProps) {
   const insets = useSafeAreaInsets();
+  const { signIn, signInWithGoogle, isLoading } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -55,16 +54,35 @@ export default function SignInScreen({
   const handleSignIn = async () => {
     if (!validateForm()) return;
     
-    setIsLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      onSignIn();
+      const { error } = await signIn(formData.email.trim(), formData.password);
+      
+      if (error) {
+        Alert.alert(
+          'Sign In Failed',
+          error.message || 'Please check your email and password and try again.',
+          [{ text: 'OK' }]
+        );
+      }
+      // If successful, the auth state will update automatically
     } catch (error) {
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
-    } finally {
-      setIsLoading(false);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        Alert.alert(
+          'Google Sign In Failed',
+          error.message || 'Unable to sign in with Google. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred with Google sign in.');
     }
   };
 
@@ -180,13 +198,23 @@ export default function SignInScreen({
             </View>
 
             <View className="flex-row gap-4">
-              <Pressable className="flex-1 bg-gray-50 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center">
+              <Pressable 
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}
+                className={cn(
+                  'flex-1 border py-4 rounded-xl flex-row items-center justify-center',
+                  isLoading ? 'bg-gray-100 border-gray-200' : 'bg-gray-50 border-gray-200'
+                )}
+              >
                 <Ionicons name="logo-google" size={20} color="#4285F4" />
                 <Text className="text-gray-700 font-medium ml-2">Google</Text>
               </Pressable>
-              <Pressable className="flex-1 bg-gray-50 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center">
+              <Pressable 
+                disabled={true}
+                className="flex-1 bg-gray-100 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center opacity-50"
+              >
                 <Ionicons name="logo-apple" size={20} color="#000000" />
-                <Text className="text-gray-700 font-medium ml-2">Apple</Text>
+                <Text className="text-gray-500 font-medium ml-2">Apple</Text>
               </Pressable>
             </View>
           </View>

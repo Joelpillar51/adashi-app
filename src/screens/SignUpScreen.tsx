@@ -11,15 +11,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../state/authStore';
 import { cn } from '../utils/cn';
 
 interface SignUpScreenProps {
-  onSignUp: () => void;
   onNavigateToSignIn: () => void;
 }
 
-export default function SignUpScreen({ onSignUp, onNavigateToSignIn }: SignUpScreenProps) {
+export default function SignUpScreen({ onNavigateToSignIn }: SignUpScreenProps) {
   const insets = useSafeAreaInsets();
+  const { signUp, signInWithGoogle, isLoading } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -30,7 +31,6 @@ export default function SignUpScreen({ onSignUp, onNavigateToSignIn }: SignUpScr
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const validateForm = () => {
@@ -96,16 +96,50 @@ export default function SignUpScreen({ onSignUp, onNavigateToSignIn }: SignUpScr
   const handleSignUp = async () => {
     if (!validateForm()) return;
     
-    setIsLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      onSignUp();
+      const { error } = await signUp(
+        formData.email.trim(),
+        formData.password,
+        formData.fullName.trim(),
+        formData.phone.trim()
+      );
+      
+      if (error) {
+        Alert.alert(
+          'Sign Up Failed',
+          error.message || 'Unable to create account. Please try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Account Created!',
+          'Please check your email to verify your account before signing in.',
+          [
+            { 
+              text: 'Go to Sign In', 
+              onPress: onNavigateToSignIn 
+            }
+          ]
+        );
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
-    } finally {
-      setIsLoading(false);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        Alert.alert(
+          'Google Sign Up Failed',
+          error.message || 'Unable to sign up with Google. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred with Google sign up.');
     }
   };
 
@@ -306,13 +340,23 @@ export default function SignUpScreen({ onSignUp, onNavigateToSignIn }: SignUpScr
             </View>
 
             <View className="flex-row gap-4">
-              <Pressable className="flex-1 bg-gray-50 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center">
+              <Pressable 
+                onPress={handleGoogleSignUp}
+                disabled={isLoading}
+                className={cn(
+                  'flex-1 border py-4 rounded-xl flex-row items-center justify-center',
+                  isLoading ? 'bg-gray-100 border-gray-200' : 'bg-gray-50 border-gray-200'
+                )}
+              >
                 <Ionicons name="logo-google" size={20} color="#4285F4" />
                 <Text className="text-gray-700 font-medium ml-2">Google</Text>
               </Pressable>
-              <Pressable className="flex-1 bg-gray-50 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center">
+              <Pressable 
+                disabled={true}
+                className="flex-1 bg-gray-100 border border-gray-200 py-4 rounded-xl flex-row items-center justify-center opacity-50"
+              >
                 <Ionicons name="logo-apple" size={20} color="#000000" />
-                <Text className="text-gray-700 font-medium ml-2">Apple</Text>
+                <Text className="text-gray-500 font-medium ml-2">Apple</Text>
               </Pressable>
             </View>
           </View>

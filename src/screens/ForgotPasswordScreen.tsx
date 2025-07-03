@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../state/authStore';
 import { cn } from '../utils/cn';
 
 interface ForgotPasswordScreenProps {
@@ -20,6 +21,7 @@ interface ForgotPasswordScreenProps {
 
 export default function ForgotPasswordScreen({ onGoBack, onResetSent }: ForgotPasswordScreenProps) {
   const insets = useSafeAreaInsets();
+  const { resetPassword } = useAuthStore();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,10 +45,18 @@ export default function ForgotPasswordScreen({ onGoBack, onResetSent }: ForgotPa
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setEmailSent(true);
-      onResetSent();
+      const { error } = await resetPassword(email.trim());
+      
+      if (error) {
+        Alert.alert(
+          'Reset Failed',
+          error.message || 'Unable to send reset email. Please try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        setEmailSent(true);
+        onResetSent();
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to send reset email. Please try again.');
     } finally {
