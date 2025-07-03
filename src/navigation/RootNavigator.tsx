@@ -8,14 +8,15 @@ import AppNavigator from './AppNavigator';
 
 export default function RootNavigator() {
   const { 
-    isAuthenticated,
+    session,
     hasSeenOnboarding, 
     hasSeenSplash,
     isInitialized,
     initialize,
     markOnboardingComplete, 
     markSplashComplete,
-    getInitialRoute 
+    getInitialRoute,
+    isAuthenticated
   } = useAuthStore();
   
   const [currentRoute, setCurrentRoute] = useState<'Splash' | 'Onboarding' | 'Auth' | 'Main'>('Splash');
@@ -30,7 +31,7 @@ export default function RootNavigator() {
       const route = getInitialRoute();
       setCurrentRoute(route);
     }
-  }, [isAuthenticated(), hasSeenOnboarding, hasSeenSplash, isInitialized]);
+  }, [session, hasSeenOnboarding, hasSeenSplash, isInitialized, getInitialRoute]);
 
   const handleSplashComplete = () => {
     markSplashComplete();
