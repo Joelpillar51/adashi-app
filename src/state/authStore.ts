@@ -28,6 +28,7 @@ interface AuthState {
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
   refreshSession: () => Promise<void>;
+  refreshProfile: () => Promise<{ error: Error | null }>;
   
   // Navigation actions
   markSplashComplete: () => void;
@@ -61,12 +62,52 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session?.user) {
+            console.log('Initializing with user:', session.user.email);
+            
             // Fetch user profile
-            const { data: profile } = await supabase
+            const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .single();
+            
+            if (profileError) {
+              console.error('Error fetching profile during initialization:', profileError);
+              
+              // If profile doesn't exist, create it
+              if (profileError.code === 'PGRST116') {
+                console.log('Profile not found during init, creating...');
+                const { full_name, phone } = session.user.user_metadata || {};
+                
+                const { error: createError } = await supabase.rpc('upsert_profile', {
+                  user_id: session.user.id,
+                  user_email: session.user.email!,
+                  user_full_name: full_name || null,
+                  user_phone: phone || null,
+                });
+                
+                if (!createError) {
+                  // Fetch the newly created profile
+                  const { data: newProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                  
+                  console.log('Profile created during init:', newProfile);
+                  
+                  set({ 
+                    session, 
+                    user: session.user, 
+                    profile: newProfile || null,
+                    isInitialized: true 
+                  });
+                  return;
+                }
+              }
+            } else {
+              console.log('Profile found during initialization:', profile);
+            }
             
             set({ 
               session, 
@@ -88,13 +129,49 @@ export const useAuthStore = create<AuthState>()(
             console.log('Auth state changed:', event, session?.user?.email);
             
             if (session?.user) {
-              // Fetch updated profile
-              const { data: profile } = await supabase
+              // Fetch updated profile with error handling
+              const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .single();
               
+              if (profileError) {
+                console.error('Error fetching profile on auth change:', profileError);
+                
+                // If profile doesn't exist, try to create it from user metadata
+                if (profileError.code === 'PGRST116') { // No rows returned
+                  console.log('Profile not found, attempting to create from user metadata');
+                  const { full_name, phone } = session.user.user_metadata || {};
+                  
+                  const { error: createError } = await supabase.rpc('upsert_profile', {
+                    user_id: session.user.id,
+                    user_email: session.user.email!,
+                    user_full_name: full_name || null,
+                    user_phone: phone || null,
+                  });
+                  
+                  if (createError) {
+                    console.error('Failed to create profile from metadata:', createError);
+                  } else {
+                    // Fetch the newly created profile
+                    const { data: newProfile } = await supabase
+                      .from('profiles')
+                      .select('*')
+                      .eq('id', session.user.id)
+                      .single();
+                    
+                    set({ 
+                      session, 
+                      user: session.user, 
+                      profile: newProfile || null 
+                    });
+                    return;
+                  }
+                }
+              }
+              
+              console.log('Profile fetched:', profile);
               set({ 
                 session, 
                 user: session.user, 
@@ -204,6 +281,13 @@ export const useAuthStore = create<AuthState>()(
           if (data.user) {
             const { full_name, phone } = data.user.user_metadata;
             
+            console.log('Creating profile for user:', {
+              user_id: data.user.id,
+              email: data.user.email,
+              full_name,
+              phone
+            });
+            
             const { error: profileError } = await supabase.rpc('upsert_profile', {
               user_id: data.user.id,
               user_email: data.user.email!,
@@ -213,6 +297,23 @@ export const useAuthStore = create<AuthState>()(
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
+              // Still return success but log the error for debugging
+            } else {
+              console.log('Profile created successfully');
+              
+              // Fetch the created profile to update state
+              const { data: profile, error: fetchError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+              
+              if (fetchError) {
+                console.error('Error fetching created profile:', fetchError);
+              } else {
+                console.log('Profile fetched successfully:', profile);
+                set({ profile });
+              }
             }
           }
 
@@ -358,6 +459,70 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error('Session refresh error:', error);
+        }
+      },
+
+      // Refresh profile data
+      refreshProfile: async () => {
+        try {
+          const { user } = get();
+          if (!user) {
+            return { error: new Error('No authenticated user') };
+          }
+
+          console.log('Refreshing profile for user:', user.id);
+          
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Profile refresh error:', error);
+            
+            // If profile doesn't exist, try to create it
+            if (error.code === 'PGRST116') {
+              console.log('Profile not found, creating new profile');
+              const { full_name, phone } = user.user_metadata || {};
+              
+              const { error: createError } = await supabase.rpc('upsert_profile', {
+                user_id: user.id,
+                user_email: user.email!,
+                user_full_name: full_name || null,
+                user_phone: phone || null,
+              });
+              
+              if (createError) {
+                console.error('Failed to create profile during refresh:', createError);
+                return { error: createError };
+              }
+              
+              // Fetch the newly created profile
+              const { data: newProfile, error: fetchError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+              
+              if (fetchError) {
+                return { error: fetchError };
+              }
+              
+              set({ profile: newProfile });
+              console.log('New profile created and set:', newProfile);
+              return { error: null };
+            }
+            
+            return { error };
+          }
+
+          set({ profile });
+          console.log('Profile refreshed successfully:', profile);
+          return { error: null };
+        } catch (error) {
+          console.error('Profile refresh error:', error);
+          return { error: error as Error };
         }
       },
 

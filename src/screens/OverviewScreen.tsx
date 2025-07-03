@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useGroupStore } from '../state/groupStore';
 import { useUserStore, mockUserProfile } from '../state/userStore';
+import { useAuthStore } from '../state/authStore';
 import { useNotificationStore, createPaymentDueBanner } from '../state/notificationStore';
 import { mockGroups, mockPayments, mockTimeline, mockMessages } from '../state/mockData';
 import { formatNaira, formatCompactNaira } from '../utils/currency';
@@ -34,11 +35,20 @@ export default function OverviewScreen({ navigation }: any) {
   } = useGroupStore();
   
   const { 
-    profile,
+    profile: oldProfile,
     setProfile,
-    getDisplayName,
-    getInitials 
+    getDisplayName: getOldDisplayName,
+    getInitials: getOldInitials
   } = useUserStore();
+  
+  const {
+    profile: authProfile,
+    user,
+    getDisplayName,
+    getInitials,
+    refreshProfile,
+    isAuthenticated
+  } = useAuthStore();
   
   const { 
     getVisibleBanners, 
@@ -59,11 +69,32 @@ export default function OverviewScreen({ navigation }: any) {
       addBanner(createPaymentDueBanner('group1', 'Lagos Friends Circle', 50000, 14));
     }
     
-    // Initialize user profile if not set
-    if (!profile) {
+    // Initialize user profile if not set (fallback to mock for unauthenticated users)
+    if (!oldProfile && !isAuthenticated()) {
       setProfile(mockUserProfile);
     }
   }, []);
+
+  // Debug effect to track profile changes
+  useEffect(() => {
+    console.log('OverviewScreen Profile Debug:', {
+      isAuthenticated: isAuthenticated(),
+      user: user?.email,
+      authProfile,
+      oldProfile,
+      mockProfile: mockUserProfile
+    });
+    
+    // If authenticated user but no profile, try to refresh
+    if (isAuthenticated() && user && !authProfile) {
+      console.log('Authenticated user without profile, attempting refresh...');
+      refreshProfile().then(({ error }) => {
+        if (error) {
+          console.error('Failed to refresh profile:', error);
+        }
+      });
+    }
+  }, [authProfile, user, isAuthenticated]);
 
   const upcomingPayments = getUpcomingPayments();
   const activeGroups = groups.filter((group) => group.status === 'active');
@@ -82,12 +113,18 @@ export default function OverviewScreen({ navigation }: any) {
   const completedContributions = myContributions.filter(p => p.status === 'completed');
   const completedCollections = myCollections.filter(p => p.status === 'completed');
   
+  // Use auth profile if available, otherwise fall back to old profile or mock
+  const currentProfile = authProfile || oldProfile || mockUserProfile;
+  const currentDisplayName = isAuthenticated() ? getDisplayName() : getOldDisplayName();
+  const currentInitials = isAuthenticated() ? getInitials() : getOldInitials();
+
   const userStats = {
-    totalContributed: myContributions.reduce((sum, p) => sum + p.amount, 0),
+    // Use profile data if available from auth
+    totalContributed: authProfile?.total_contributions ? authProfile.total_contributions / 100 : myContributions.reduce((sum, p) => sum + p.amount, 0),
     totalCollected: myCollections.reduce((sum, p) => sum + p.amount, 0),
-    totalGroups: groups.length,
-    activeGroups: activeGroups.length,
-    completedCycles: completedCollections.length,
+    totalGroups: authProfile?.active_groups || groups.length,
+    activeGroups: authProfile?.active_groups || activeGroups.length,
+    completedCycles: authProfile?.completed_cycles || completedCollections.length,
     contributionCount: completedContributions.length,
     pendingContributions: myContributions.filter(p => p.status === 'pending').length,
     successRate: myContributions.length > 0 ? Math.round((completedContributions.length / myContributions.length) * 100) : 100,
@@ -224,7 +261,7 @@ export default function OverviewScreen({ navigation }: any) {
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1">
             <Text className="text-lg text-gray-600 mb-1">Good {getTimeOfDay()}</Text>
-            <Text className="text-2xl font-bold text-gray-900">{getDisplayName()}</Text>
+            <Text className="text-2xl font-bold text-gray-900">{currentDisplayName}</Text>
           </View>
           <View className="flex-row items-center gap-3">
             <Pressable 
@@ -245,12 +282,44 @@ export default function OverviewScreen({ navigation }: any) {
               className="w-12 h-12 bg-blue-500 rounded-full items-center justify-center"
             >
               <Text className="text-base font-bold text-white">
-                {getInitials()}
+                {currentInitials}
               </Text>
             </Pressable>
           </View>
         </View>
         <Text className="text-sm text-gray-500 mt-1">Your digital savings circle</Text>
+        
+        {/* Debug Info - Remove in production */}
+        {__DEV__ && (
+          <View className="flex-row gap-2 mt-2">
+            <Pressable 
+              onPress={() => {
+                Alert.alert(
+                  'Profile Debug Info',
+                  `Authenticated: ${isAuthenticated()}
+User Email: ${user?.email || 'None'}
+Auth Profile: ${authProfile ? 'Exists' : 'None'}
+Profile Email: ${authProfile?.email || 'None'}
+Profile Name: ${authProfile?.full_name || 'None'}
+Display Name: ${currentDisplayName}`,
+                  [
+                    { text: 'Refresh Profile', onPress: () => refreshProfile() },
+                    { text: 'OK' }
+                  ]
+                );
+              }}
+              className="px-3 py-1 bg-yellow-100 rounded-md"
+            >
+              <Text className="text-xs text-yellow-800">Quick Debug</Text>
+            </Pressable>
+            <Pressable 
+              onPress={() => navigation.navigate('ProfileDebug')}
+              className="px-3 py-1 bg-blue-100 rounded-md"
+            >
+              <Text className="text-xs text-blue-800">Full Debug</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Stats Cards */}

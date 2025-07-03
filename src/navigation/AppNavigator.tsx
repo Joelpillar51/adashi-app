@@ -14,6 +14,7 @@ import ManualPositionAssignmentScreen from '../screens/ManualPositionAssignmentS
 import NotificationScreen from '../screens/NotificationScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
+import ProfileDebugScreen from '../screens/ProfileDebugScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +39,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Notifications" component={NotificationScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <Stack.Screen name="ProfileDebug" component={ProfileDebugScreen} />
     </Stack.Navigator>
   );
 }
