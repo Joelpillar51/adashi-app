@@ -36,6 +36,7 @@ A comprehensive React Native application for managing rotating savings and credi
 
 ## 🚀 Tech Stack
 
+### Frontend
 - **Framework**: React Native with Expo SDK 53
 - **Language**: TypeScript
 - **Navigation**: React Navigation v6 (Native Stack & Tabs)
@@ -45,6 +46,14 @@ A comprehensive React Native application for managing rotating savings and credi
 - **Gestures**: React Native Gesture Handler
 - **Icons**: Expo Vector Icons (Ionicons)
 - **Date Handling**: date-fns with WAT timezone support
+
+### Backend & Database
+- **Backend-as-a-Service**: Supabase
+- **Database**: PostgreSQL with Row Level Security
+- **Authentication**: Supabase Auth with email/password and Google OAuth
+- **Email Verification**: OTP-based email confirmation
+- **Real-time**: Supabase real-time subscriptions
+- **Security**: JWT tokens, RLS policies, secure API endpoints
 
 ## 📦 Installation
 
@@ -72,7 +81,21 @@ expo start
 ```
 
 ### Environment Setup
-The app comes with pre-configured environment variables. No additional API keys are required for development.
+
+1. **Copy environment template**:
+```bash
+cp .env.example .env
+```
+
+2. **Configure Supabase** (Required for full functionality):
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+3. **Set up database**: Follow the [Supabase Setup Guide](./SUPABASE_SETUP.md)
+
+For development without Supabase, the app will use mock data.
 
 ## 🏗️ Project Structure
 
@@ -89,11 +112,13 @@ src/
 │   ├── payments/           # Payment handling
 │   └── profile/            # User profile
 ├── state/              # State management
-│   ├── authStore.ts        # Authentication state
+│   ├── authStore.ts        # Supabase authentication
 │   ├── groupStore.ts       # Groups and payments
 │   ├── userStore.ts        # User profile
 │   ├── notificationStore.ts # Notifications
 │   └── mockData.ts         # Development data
+├── config/             # Configuration files
+│   └── supabase.ts         # Supabase client setup
 ├── types/              # TypeScript definitions
 ├── utils/              # Utility functions
 │   ├── currency.ts         # Naira formatting
@@ -172,21 +197,53 @@ bun lint
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📋 TODO
+## 📋 Roadmap
 
-- [ ] Real backend integration
+### Phase 1: Core Authentication ✅
+- [x] Supabase authentication integration
+- [x] Email/password signup and signin
+- [x] Google OAuth integration
+- [x] OTP email verification
+- [x] User profile management
+- [x] Row Level Security implementation
+
+### Phase 2: Group Management (In Progress)
+- [ ] Group creation and management
+- [ ] Member invitation system
+- [ ] Position assignment (manual/raffle)
+- [ ] Group settings and permissions
+- [ ] Real-time group updates
+
+### Phase 3: Financial Tracking
+- [ ] Contribution recording
+- [ ] Payment verification
+- [ ] Payout distribution
+- [ ] Transaction history
+- [ ] Financial reporting
+
+### Phase 4: Advanced Features
 - [ ] Push notifications
-- [ ] Biometric authentication
-- [ ] Offline support
+- [ ] Real-time messaging
+- [ ] Advanced analytics
 - [ ] Payment gateway integration
+- [ ] Offline support
 - [ ] Multi-language support
 - [ ] Dark mode theme
 
+## 📚 Documentation
+
+- [Supabase Setup Guide](./SUPABASE_SETUP.md) - Complete backend setup instructions
+- [Database Schema](./DATABASE_SCHEMA.md) - Comprehensive database documentation
+- [OTP Setup Guide](./OTP_SETUP.md) - Email verification implementation
+- [Development Guide](./ReadMeKen.md) - Development best practices and common issues
+
 ## 🐛 Known Issues
 
-- Date picker on iOS needs proper wheel display (partially resolved)
-- Navigation context issues in nested screens (resolved)
-- Bank details validation needs enhancement
+- ✅ Date picker on iOS wheel display (resolved)
+- ✅ Navigation context issues in nested screens (resolved)
+- ✅ Supabase auth trigger permissions (resolved - using upsert_profile function)
+- [ ] Bank details validation needs enhancement
+- [ ] Real-time updates for group changes
 
 ## 📄 License
 

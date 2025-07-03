@@ -35,94 +35,32 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### 4. Set Up Database Tables
 
-Go to **SQL Editor** in your Supabase dashboard and run this SQL:
+**IMPORTANT**: Use the fixed SQL file to avoid permission errors.
 
-```sql
--- Enable Row Level Security
-ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
+Go to **SQL Editor** in your Supabase dashboard and run the SQL from:
+📁 `sql/create_profiles_table_fixed.sql`
 
--- Create profiles table
-CREATE TABLE profiles (
-  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email TEXT NOT NULL,
-  full_name TEXT,
-  phone TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+This creates a comprehensive profiles table with:
+- ✅ User profile management
+- ✅ ROSCA/Tontine statistics tracking
+- ✅ Notification preferences
+- ✅ Row Level Security
+- ✅ Automatic profile creation via `upsert_profile` function
 
--- Create groups table
-CREATE TABLE groups (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT NOT NULL,
-  member_count INTEGER NOT NULL CHECK (member_count >= 3 AND member_count <= 20),
-  monthly_amount BIGINT NOT NULL CHECK (monthly_amount >= 100000), -- Minimum ₦1,000 in kobo
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed')),
-  owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+**Key Features:**
+- `total_contributions`: Track total Naira contributions
+- `active_groups`: Number of active ROSCA groups
+- `completed_cycles`: Number of completed savings cycles
+- `notification_settings`: JSON-based preference management
 
--- Create group_members table
-CREATE TABLE group_members (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  group_id UUID REFERENCES groups(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
-  rotation_position INTEGER,
-  joined_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  UNIQUE(group_id, user_id),
-  UNIQUE(group_id, rotation_position)
-);
+### 5. Configure Email Verification
 
--- Set up Row Level Security policies
-CREATE POLICY "Users can view their own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
+1. Go to **Authentication** → **Settings**
+2. Enable **Email confirmations**
+3. Set **Confirm email** to `ON`
+4. Users will receive OTP codes via email for account verification
 
-CREATE POLICY "Users can update their own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can view groups they belong to" ON groups
-  FOR SELECT USING (
-    id IN (
-      SELECT group_id FROM group_members WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can create groups" ON groups
-  FOR INSERT WITH CHECK (auth.uid() = owner_id);
-
-CREATE POLICY "Group owners can update their groups" ON groups
-  FOR UPDATE USING (auth.uid() = owner_id);
-
--- Create function to automatically create profile
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    NEW.raw_user_meta_data->>'full_name'
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger for new user signup
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
-```
-
-### 5. Configure Google OAuth (Optional)
+### 6. Configure Google OAuth (Optional)
 
 1. Go to **Authentication** → **Providers** in Supabase
 2. Click on **Google**
@@ -136,24 +74,39 @@ ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
      - `https://your-project-id.supabase.co/auth/v1/callback`
    - Copy Client ID and Client Secret to Supabase
 
-### 6. Configure Email Templates
+### 7. Configure Email Templates
 
 1. Go to **Authentication** → **Email Templates**
 2. Customize the email templates:
-   - **Confirm signup**: Welcome to Adashi
+   - **Confirm signup**: Welcome to Adashi! Use this code to verify your account: {{ .Token }}
    - **Reset password**: Reset your Adashi password
    - **Magic link**: Sign in to Adashi
 
-### 7. Test Your Setup
+### 8. Test Your Setup
 
 1. Restart your Expo development server
 2. Try to:
    - Sign up with email/password
+   - Verify email with OTP code
    - Sign in with email/password
    - Reset password
    - Sign in with Google (if configured)
 
 ## 🔧 Advanced Configuration
+
+### Profile Statistics Management
+
+The app includes a helper function to update user statistics:
+
+```sql
+-- Update user statistics (contributions in kobo, groups count, cycles count)
+SELECT update_profile_stats(
+  'user-uuid-here',
+  50000, -- Add ₦500 (50000 kobo)
+  1,     -- Add 1 active group  
+  0      -- No completed cycles change
+);
+```
 
 ### URL Scheme Setup
 
@@ -168,22 +121,46 @@ For deep linking (password reset, OAuth), add this to your `app.json`:
 }
 ```
 
-### Production Configuration
+### Database Schema Overview
 
-For production apps:
+**profiles table:**
+- User authentication and profile data
+- ROSCA participation statistics
+- Notification preferences
+- Automatic creation via `upsert_profile` function
 
-1. Set up custom domain for Supabase
-2. Configure proper CORS settings
-3. Set up database backups
-4. Enable additional security features
+**Future tables** (to be implemented):
+- `groups`: ROSCA group management
+- `group_members`: Member participation tracking
+- `contributions`: Payment and contribution records
+- `rotations`: Turn-based payout management
 
 ## 🚨 Security Best Practices
 
 1. **Never commit** your Supabase keys to Git
-2. Use **Row Level Security** for all tables
+2. Use **Row Level Security** for all tables (already configured)
 3. Validate data on both client and server
-4. Use proper **email verification**
+4. Use proper **email verification** (OTP-based)
 5. Implement **rate limiting** for auth endpoints
+6. Profile updates require user authentication
+
+## 🔍 Troubleshooting
+
+### Common Issues:
+
+1. **"must be owner of user table" error**
+   - ✅ Fixed: Use `create_profiles_table_fixed.sql` instead
+   - This version uses `upsert_profile` function instead of triggers
+
+2. **Profile not created after signup**
+   - Check Supabase logs for errors
+   - Ensure `upsert_profile` function was created successfully
+   - Verify email confirmation is working
+
+3. **Authentication not persisting**
+   - Check AsyncStorage permissions
+   - Verify Supabase client configuration
+   - Ensure proper session management
 
 ## 📞 Support
 
@@ -191,7 +168,13 @@ If you encounter issues:
 1. Check Supabase logs in the dashboard
 2. Review the [Supabase docs](https://supabase.com/docs)
 3. Check our GitHub issues
+4. Verify all SQL functions were created successfully
+
+## 📁 SQL Files Reference
+
+- `sql/create_profiles_table_fixed.sql` - **Use this one** (works without permission errors)
+- `sql/create_profiles_table.sql` - Original version (may cause permission errors)
 
 ---
 
-Your Adashi app is now ready with full Supabase authentication! 🎉
+Your Adashi app is now ready with full Supabase authentication and profile management! 🎉
