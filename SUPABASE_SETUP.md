@@ -35,10 +35,19 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### 4. Set Up Database Tables
 
-**IMPORTANT**: Use the fixed SQL file to avoid permission errors.
+**🚨 CRITICAL STEP**: You must run the SQL files for the app to work properly.
 
-Go to **SQL Editor** in your Supabase dashboard and run the SQL from:
-📁 `sql/create_profiles_table_fixed.sql`
+**Quick Setup**: Follow the [SQL Setup Guide](./sql/README.md) which provides step-by-step instructions.
+
+**SQL Files to Run** (in this order):
+1. 📁 `sql/create_profiles_table_complete.sql` - Creates the database tables
+2. 📁 `sql/profile_functions.sql` - Creates the required functions  
+3. 📁 `sql/test_profile_setup.sql` - Verifies everything works
+
+**How to Run**:
+1. Go to **SQL Editor** in your Supabase dashboard
+2. Copy contents from each file in the `sql/` folder
+3. Paste and click **"Run"** for each file
 
 This creates a comprehensive profiles table with:
 - ✅ User profile management

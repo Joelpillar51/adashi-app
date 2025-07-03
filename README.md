@@ -93,9 +93,11 @@ EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-3. **Set up database**: Follow the [Supabase Setup Guide](./SUPABASE_SETUP.md)
+3. **Set up database**: 
+   - **Quick Setup**: Follow the [SQL Setup Guide](./sql/README.md) - **START HERE**
+   - **Detailed Guide**: [Supabase Setup Guide](./SUPABASE_SETUP.md)
 
-For development without Supabase, the app will use mock data.
+**IMPORTANT**: You must run the SQL files in the `sql/` folder for the app to work with real user data. Without this, the app will only show mock data.
 
 ## 🏗️ Project Structure
 
