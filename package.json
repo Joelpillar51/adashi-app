@@ -1,7 +1,10 @@
 {
-  "name": "template-app-53",
+  "name": "adashi-app",
   "version": "1.0.0",
+  "description": "Nigerian ROSCA/Tontine Mobile App - Digital savings circles for Nigerian communities",
   "main": "index.ts",
+  "keywords": ["react-native", "expo", "nigeria", "rosca", "tontine", "savings", "mobile"],
+  "author": "Adashi Team",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
